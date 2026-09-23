@@ -6,10 +6,10 @@
     "dev": "next dev",
     "clean": "node -e \"try { require('fs').rmSync('.next', { recursive: true, force: true }); } catch (e) {}\"",
     "clean:dev": "npm run clean && next dev",
-    "build": "prisma generate && next build",
+    "build": "npm run db:generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "db:generate": "prisma generate",
+    "db:generate": "node -e \"process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres'; require('child_process').execSync('npx prisma generate', { stdio: 'inherit', env: process.env })\"",
     "db:push": "prisma db push",
     "db:import": "tsx scripts/migrate-from-json.ts"
   },
