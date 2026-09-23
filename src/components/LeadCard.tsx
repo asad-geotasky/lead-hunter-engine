@@ -135,6 +135,14 @@ export default function LeadCard({
               <span>Owner: <strong>{ownerName}</strong></span>
             </div>
           )}
+
+          {/* Email indicator */}
+          {lead.email && (
+            <div className="flex items-center gap-1.5 text-emerald-300 truncate">
+              <span className="w-3.5 h-3.5 flex items-center justify-center font-bold text-[10px] bg-emerald-500/20 text-emerald-400 rounded-full">@</span>
+              <span className="truncate max-w-[220px]" title={lead.email}>{lead.email}</span>
+            </div>
+          )}
         </div>
       </div>
 

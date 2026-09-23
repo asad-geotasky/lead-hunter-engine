@@ -71,6 +71,7 @@ export interface Lead {
   address: string;
   city: string;
   phone: string;
+  email?: string | null;
   rating: number;
   reviewCount: number;
   reviews: LeadReview[];
@@ -85,6 +86,8 @@ export interface Lead {
   websiteAudit: WebsiteAudit;
   outreach?: OutreachKit;
 
+  projectId?: string | null;
+
   pipeline: {
     stage: PipelineStage;
     lastContactedAt?: string;
@@ -96,11 +99,75 @@ export interface Lead {
   updatedAt: string;
 }
 
+export type SearchProvider = 'apify' | 'outscraper' | 'google' | 'mock';
+
 export interface SearchQuery {
   niche: string;
   city: string;
+  provider?: SearchProvider;
+  apiKey?: string;
+  projectId?: string;
   filterNoWebsite?: boolean;
   maxReviews?: number;
   minRating?: number;
-  useMock?: boolean;
+  minScore?: number;
+  limit?: number;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  targetCity?: string | null;
+  leadCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Mailbox {
+  id: string;
+  email: string;
+  senderName: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure: boolean;
+  smtpUser: string;
+  smtpPass: string;
+  replyTo?: string | null;
+  dailyLimit: number;
+  sentToday: number;
+  lastResetDate: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Campaign {
+  id: string;
+  projectId: string;
+  projectName?: string;
+  name: string;
+  subject: string;
+  bodyTemplate: string;
+  delaySeconds: number;
+  status: 'DRAFT' | 'RUNNING' | 'COMPLETED' | 'PAUSED';
+  sentCount?: number;
+  totalLeads?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailLog {
+  id: string;
+  campaignId: string;
+  leadId: string;
+  mailboxId?: string | null;
+  mailboxEmail?: string;
+  recipient: string;
+  subject: string;
+  status: 'PENDING' | 'SENT' | 'FAILED';
+  error?: string | null;
+  sentAt?: string | null;
+  createdAt: string;
 }

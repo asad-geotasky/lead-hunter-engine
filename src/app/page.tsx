@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
-import { Lead, PipelineStage } from '@/types/lead';
+import { Lead, PipelineStage, Project } from '@/types/lead';
 import SearchBar from '@/components/SearchBar';
 import LeadCard from '@/components/LeadCard';
 import PipelineBoard from '@/components/PipelineBoard';
 import LeadDetailModal from '@/components/LeadDetailModal';
 import ExportModal from '@/components/ExportModal';
 import SyncModal from '@/components/SyncModal';
+import ProjectManagerModal from '@/components/ProjectManagerModal';
+import MailboxSettingsModal from '@/components/MailboxSettingsModal';
+import CampaignModal from '@/components/CampaignModal';
 import { 
   Target, 
   LayoutGrid, 
@@ -16,22 +19,33 @@ import {
   Sparkles, 
   Globe, 
   Smartphone, 
-  Zap,
-  Search,
-  RefreshCw,
-  Send
+  Zap, 
+  Search, 
+  RefreshCw, 
+  Send,
+  Folder,
+  Mail,
+  Flame,
+  Layers
 } from 'lucide-react';
 
 export default function Dashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'pipeline'>('grid');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  
+  // Modals
   const [showExport, setShowExport] = useState(false);
   const [showSync, setShowSync] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showMailboxModal, setShowMailboxModal] = useState(false);
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
 
   // Filters
-  const [filterType, setFilterType] = useState<'all' | 'no-website' | 'high-score' | 'mobile'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'no-website' | 'high-score' | 'mobile' | 'has-email'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Per-card loading states
@@ -40,11 +54,12 @@ export default function Dashboard() {
 
   const [, startTransition] = useTransition();
 
-  // Load existing leads on mount
+  // Load existing leads & projects on mount
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/leads');
+      const url = activeProjectId ? `/api/leads?projectId=${activeProjectId}` : '/api/leads';
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setLeads(data.leads || []);
@@ -56,17 +71,33 @@ export default function Dashboard() {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch('/api/projects');
+      const data = await res.json();
+      if (data.success) {
+        setProjects(data.projects || []);
+      }
+    } catch (err) {
+      console.error('Failed to load projects:', err);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
-  }, []);
+    fetchProjects();
+  }, [activeProjectId]);
 
   // Run Search
   const handleSearch = async (params: {
     niche: string;
     city: string;
+    provider: any;
     apiKey: string;
+    projectId?: string;
     filterNoWebsite: boolean;
     minScore: number;
+    limit: number;
   }) => {
     try {
       setLoading(true);
@@ -77,8 +108,8 @@ export default function Dashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        // Refetch full leads to refresh states
         await fetchLeads();
+        await fetchProjects();
       } else {
         alert(data.error || 'Search failed');
       }
@@ -168,9 +199,11 @@ export default function Dashboard() {
 
   // Filter Leads
   const filteredLeads = leads.filter((l) => {
+    if (activeProjectId && l.projectId !== activeProjectId) return false;
     if (filterType === 'no-website' && l.website) return false;
     if (filterType === 'high-score' && l.opportunityScore < 70) return false;
     if (filterType === 'mobile' && l.phoneIntelligence?.lineType !== 'MOBILE') return false;
+    if (filterType === 'has-email' && !l.email) return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -178,16 +211,20 @@ export default function Dashboard() {
       const matchCity = l.city.toLowerCase().includes(q);
       const matchOwner = l.ownerDiscovery?.ownerName?.toLowerCase().includes(q);
       const matchNiche = l.category.toLowerCase().includes(q);
-      if (!matchName && !matchCity && !matchOwner && !matchNiche) return false;
+      const matchEmail = l.email?.toLowerCase().includes(q);
+      if (!matchName && !matchCity && !matchOwner && !matchNiche && !matchEmail) return false;
     }
     return true;
   });
 
   // Top Metrics
-  const totalLeads = leads.length;
-  const noWebsiteCount = leads.filter((l) => !l.website).length;
-  const highScoreCount = leads.filter((l) => l.opportunityScore >= 70).length;
-  const mobileCount = leads.filter((l) => l.phoneIntelligence?.lineType === 'MOBILE').length;
+  const totalLeads = filteredLeads.length;
+  const noWebsiteCount = filteredLeads.filter((l) => !l.website).length;
+  const highScoreCount = filteredLeads.filter((l) => l.opportunityScore >= 70).length;
+  const mobileCount = filteredLeads.filter((l) => l.phoneIntelligence?.lineType === 'MOBILE').length;
+  const emailCount = filteredLeads.filter((l) => !!l.email).length;
+
+  const currentProjectName = projects.find((p) => p.id === activeProjectId)?.name || 'All Leads';
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -202,16 +239,49 @@ export default function Dashboard() {
               <div className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                 LeadHunter Engine
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                  v2.0 PRO
+                  v3.0 ENTERPRISE
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">Enrichment &amp; Instant Mockup Outreach CRM</p>
+              <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                <span>Active Workspace:</span>
+                <strong className="text-blue-400">{currentProjectName}</strong>
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Project Manager Button */}
+            <button
+              onClick={() => setShowProjectModal(true)}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
+              title="Projects & Lead Folders"
+            >
+              <Folder className="w-3.5 h-3.5 text-blue-400" />
+              <span>Projects</span>
+            </button>
+
+            {/* Mailboxes Button */}
+            <button
+              onClick={() => setShowMailboxModal(true)}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
+              title="Multi-Mailbox Gmail Rotation"
+            >
+              <Mail className="w-3.5 h-3.5 text-purple-400" />
+              <span>Mailboxes</span>
+            </button>
+
+            {/* Campaign Automation Button */}
+            <button
+              onClick={() => setShowCampaignModal(true)}
+              className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm"
+              title="Cold Email Sequences & Automation"
+            >
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <span>Campaigns</span>
+            </button>
+
             {/* View Switcher */}
-            <div className="flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-xl text-xs">
+            <div className="hidden sm:flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-xl text-xs">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
@@ -248,20 +318,20 @@ export default function Dashboard() {
             {/* Export */}
             <button
               onClick={() => setShowExport(true)}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
             >
               <Download className="w-3.5 h-3.5 text-blue-400" />
               <span>Export</span>
             </button>
 
-            {/* Campaign Sync */}
+            {/* Sync */}
             <button
               onClick={() => setShowSync(true)}
               className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-md transition"
-              title="Push filtered leads to Instantly, Smartlead, or Webhook"
+              title="Push filtered leads to external webhook or CRM"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Sync ({filteredLeads.length})</span>
+              <span>Sync</span>
             </button>
           </div>
         </div>
@@ -270,7 +340,7 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
         {/* Metric Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
               <Zap className="w-5 h-5" />
@@ -292,12 +362,22 @@ export default function Dashboard() {
           </div>
 
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xl font-bold text-purple-400">{emailCount}</div>
+              <div className="text-xs text-slate-400">Emails Scraped</div>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <div className="text-xl font-bold text-amber-400">{highScoreCount}</div>
-              <div className="text-xs text-slate-400">High Intent (70+ Pts)</div>
+              <div className="text-xs text-slate-400">High Intent (70+)</div>
             </div>
           </div>
 
@@ -312,8 +392,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Search Engine Form */}
-        <SearchBar onSearch={handleSearch} loading={loading} />
+        {/* Multi-Source Search Bar with Project Selector */}
+        <SearchBar
+          onSearch={handleSearch}
+          loading={loading}
+          projects={projects}
+          activeProjectId={activeProjectId}
+          onSelectProject={setActiveProjectId}
+          onOpenProjectModal={() => setShowProjectModal(true)}
+        />
 
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
@@ -327,6 +414,20 @@ export default function Dashboard() {
               }`}
             >
               All Leads ({leads.length})
+            </button>
+
+            <button
+              onClick={() => setFilterType('has-email')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                filterType === 'has-email'
+                  ? 'bg-purple-600 text-white shadow'
+                  : 'bg-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>Emails Available</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-900/60 text-[10px]">
+                {emailCount}
+              </span>
             </button>
 
             <button
@@ -379,7 +480,7 @@ export default function Dashboard() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search business, city, owner..."
+              placeholder="Search business, city, email..."
               className="w-full pl-9 pr-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -391,9 +492,9 @@ export default function Dashboard() {
             {filteredLeads.length === 0 ? (
               <div className="text-center py-16 bg-slate-900/40 border border-slate-800 rounded-2xl p-8">
                 <Target className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <h3 className="text-base font-bold text-white mb-1">No leads match this view</h3>
+                <h3 className="text-base font-bold text-white mb-1">No leads in this project view</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
-                  Run a search above for any niche and city (e.g., &ldquo;Plumbers in Austin, TX&rdquo;) to pull high-intent prospects.
+                  Select a scraper provider above (Apify, Outscraper, or Sandbox) and pull leads directly into &ldquo;{currentProjectName}&rdquo;.
                 </p>
               </div>
             ) : (
@@ -421,7 +522,7 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Lead Detail / Outreach Modal */}
+      {/* Modals */}
       {selectedLead && (
         <LeadDetailModal
           lead={selectedLead}
@@ -432,7 +533,6 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Export Modal */}
       {showExport && (
         <ExportModal
           leads={filteredLeads}
@@ -440,7 +540,6 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Campaign Sync Modal */}
       {showSync && (
         <SyncModal
           leads={filteredLeads}
@@ -448,6 +547,31 @@ export default function Dashboard() {
           onSuccess={fetchLeads}
         />
       )}
+
+      <ProjectManagerModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        projects={projects}
+        activeProjectId={activeProjectId}
+        onSelectProject={setActiveProjectId}
+        onRefreshProjects={fetchProjects}
+      />
+
+      <MailboxSettingsModal
+        isOpen={showMailboxModal}
+        onClose={() => setShowMailboxModal(false)}
+      />
+
+      <CampaignModal
+        isOpen={showCampaignModal}
+        onClose={() => setShowCampaignModal(false)}
+        projects={projects}
+        activeProjectId={activeProjectId}
+        onOpenMailboxModal={() => {
+          setShowCampaignModal(false);
+          setShowMailboxModal(true);
+        }}
+      />
     </div>
   );
 }

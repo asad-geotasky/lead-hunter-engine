@@ -1,40 +1,44 @@
 import fs from 'fs';
 import path from 'path';
-import { Lead, PipelineStage } from '@/types/lead';
+import { Lead, PipelineStage, Project, Mailbox, Campaign, EmailLog } from '@/types/lead';
 import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'leads.json');
+const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
+const MAILBOXES_FILE = path.join(DATA_DIR, 'mailboxes.json');
+const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
+const EMAIL_LOGS_FILE = path.join(DATA_DIR, 'email_logs.json');
 
 const hasDbConnection = !!process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== '';
 
-function ensureDataFile() {
+function ensureFile(filePath: string, defaultData: any = []) {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf-8');
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2), 'utf-8');
   }
 }
 
-function getLocalLeads(): Lead[] {
+function readJson<T>(filePath: string, defaultVal: T): T {
   try {
-    ensureDataFile();
-    const content = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(content) as Lead[];
+    ensureFile(filePath, defaultVal);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(content) as T;
   } catch (err) {
-    console.error('Error reading local leads:', err);
-    return [];
+    console.error(`Error reading ${filePath}:`, err);
+    return defaultVal;
   }
 }
 
-function saveLocalLeads(leads: Lead[]): void {
+function writeJson(filePath: string, data: any): void {
   try {
-    ensureDataFile();
-    fs.writeFileSync(DATA_FILE, JSON.stringify(leads, null, 2), 'utf-8');
+    ensureFile(filePath);
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Error saving local leads:', err);
+    console.error(`Error writing ${filePath}:`, err);
   }
 }
 
@@ -48,11 +52,13 @@ function mapDbRecordToLead(record: any): Lead {
     address: record.address,
     city: record.city,
     phone: record.phone,
+    email: record.email || null,
     rating: record.rating,
     reviewCount: record.reviewCount,
     website: record.website,
     googleMapsUrl: record.googleMapsUrl,
     opportunityScore: record.opportunityScore,
+    projectId: record.projectId || null,
     scoreBreakdown: (record.scoreBreakdown || []) as Lead['scoreBreakdown'],
     phoneIntelligence: (record.phoneIntelligence || {}) as Lead['phoneIntelligence'],
     ownerDiscovery: (record.ownerDiscovery || {}) as Lead['ownerDiscovery'],
@@ -73,11 +79,16 @@ function mapDbRecordToLead(record: any): Lead {
   };
 }
 
+/* =========================================================================
+   LEADS CRUD
+   ========================================================================= */
+
 export async function getAllLeads(filter?: {
   stage?: PipelineStage;
   noWebsite?: boolean;
   minScore?: number;
   search?: string;
+  projectId?: string;
 }): Promise<Lead[]> {
   if (hasDbConnection) {
     try {
@@ -85,6 +96,9 @@ export async function getAllLeads(filter?: {
 
       if (filter?.stage) {
         where.stage = filter.stage;
+      }
+      if (filter?.projectId) {
+        where.projectId = filter.projectId;
       }
       if (filter?.noWebsite) {
         where.OR = [{ website: null }, { website: '' }];
@@ -113,10 +127,13 @@ export async function getAllLeads(filter?: {
   }
 
   // Fallback to local storage
-  let leads = getLocalLeads();
+  let leads = readJson<Lead[]>(DATA_FILE, []);
 
   if (filter?.stage) {
     leads = leads.filter((l) => l.pipeline.stage === filter.stage);
+  }
+  if (filter?.projectId) {
+    leads = leads.filter((l) => l.projectId === filter.projectId);
   }
   if (filter?.noWebsite) {
     leads = leads.filter((l) => !l.website);
@@ -151,7 +168,7 @@ export async function getLeadById(id: string): Promise<Lead | null> {
     }
   }
 
-  const leads = getLocalLeads();
+  const leads = readJson<Lead[]>(DATA_FILE, []);
   return leads.find((l) => l.id === id) || null;
 }
 
@@ -161,8 +178,10 @@ export async function updateLead(id: string, updates: Partial<Lead>): Promise<Le
       const dataToUpdate: any = {};
       if (updates.businessName !== undefined) dataToUpdate.businessName = updates.businessName;
       if (updates.phone !== undefined) dataToUpdate.phone = updates.phone;
+      if (updates.email !== undefined) dataToUpdate.email = updates.email;
       if (updates.website !== undefined) dataToUpdate.website = updates.website;
       if (updates.opportunityScore !== undefined) dataToUpdate.opportunityScore = updates.opportunityScore;
+      if (updates.projectId !== undefined) dataToUpdate.projectId = updates.projectId;
       if (updates.pipeline?.stage !== undefined) dataToUpdate.stage = updates.pipeline.stage;
       if (updates.scoreBreakdown !== undefined) dataToUpdate.scoreBreakdown = updates.scoreBreakdown as unknown as Prisma.InputJsonValue;
       if (updates.phoneIntelligence !== undefined) dataToUpdate.phoneIntelligence = updates.phoneIntelligence as unknown as Prisma.InputJsonValue;
@@ -182,8 +201,7 @@ export async function updateLead(id: string, updates: Partial<Lead>): Promise<Le
     }
   }
 
-  // Fallback to local
-  const leads = getLocalLeads();
+  const leads = readJson<Lead[]>(DATA_FILE, []);
   const index = leads.findIndex((l) => l.id === id);
   if (index === -1) return null;
 
@@ -195,7 +213,7 @@ export async function updateLead(id: string, updates: Partial<Lead>): Promise<Le
   };
 
   leads[index] = updated;
-  saveLocalLeads(leads);
+  writeJson(DATA_FILE, leads);
   return updated;
 }
 
@@ -215,9 +233,12 @@ export async function upsertLeads(
           await prisma.lead.update({
             where: { placeId },
             data: {
+              phone: lead.phone || exists.phone,
+              email: lead.email || exists.email,
               rating: lead.rating,
               reviewCount: lead.reviewCount,
               opportunityScore: lead.opportunityScore,
+              projectId: lead.projectId || exists.projectId,
               scoreBreakdown: (lead.scoreBreakdown || []) as unknown as Prisma.InputJsonValue,
               phoneIntelligence: (lead.phoneIntelligence || {}) as unknown as Prisma.InputJsonValue,
               ownerDiscovery: (lead.ownerDiscovery || {}) as unknown as Prisma.InputJsonValue,
@@ -236,12 +257,14 @@ export async function upsertLeads(
               address: lead.address,
               city: lead.city,
               phone: lead.phone,
+              email: lead.email || null,
               rating: lead.rating || 0,
               reviewCount: lead.reviewCount || 0,
               website: lead.website || null,
               googleMapsUrl: lead.googleMapsUrl || '',
               opportunityScore: lead.opportunityScore || 0,
               stage: lead.pipeline?.stage || 'DISCOVERED',
+              projectId: lead.projectId || null,
               scoreBreakdown: (lead.scoreBreakdown || []) as unknown as Prisma.InputJsonValue,
               phoneIntelligence: (lead.phoneIntelligence || {}) as unknown as Prisma.InputJsonValue,
               ownerDiscovery: (lead.ownerDiscovery || {}) as unknown as Prisma.InputJsonValue,
@@ -261,8 +284,8 @@ export async function upsertLeads(
     }
   }
 
-  // Fallback to local
-  const existing = getLocalLeads();
+  // Local JSON fallback
+  const existing = readJson<Lead[]>(DATA_FILE, []);
   const existingMap = new Map(existing.map((l) => [l.placeId || l.phone, l]));
   let added = 0;
   let updated = 0;
@@ -274,6 +297,8 @@ export async function upsertLeads(
       existingMap.set(key, {
         ...lead,
         id: prev.id,
+        projectId: lead.projectId || prev.projectId,
+        email: lead.email || prev.email,
         pipeline: prev.pipeline,
         updatedAt: new Date().toISOString(),
       });
@@ -285,7 +310,7 @@ export async function upsertLeads(
   }
 
   const finalLeads = Array.from(existingMap.values());
-  saveLocalLeads(finalLeads);
+  writeJson(DATA_FILE, finalLeads);
   return { added, updated, total: finalLeads.length };
 }
 
@@ -299,11 +324,491 @@ export async function deleteLead(id: string): Promise<boolean> {
     }
   }
 
-  const leads = getLocalLeads();
+  const leads = readJson<Lead[]>(DATA_FILE, []);
   const filtered = leads.filter((l) => l.id !== id);
   if (filtered.length !== leads.length) {
-    saveLocalLeads(filtered);
+    writeJson(DATA_FILE, filtered);
     return true;
   }
   return false;
+}
+
+/* =========================================================================
+   PROJECTS CRUD
+   ========================================================================= */
+
+export async function getAllProjects(): Promise<Project[]> {
+  if (hasDbConnection) {
+    try {
+      const projects = await prisma.project.findMany({
+        include: { _count: { select: { leads: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+      return projects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        category: p.category,
+        targetCity: p.targetCity,
+        leadCount: p._count.leads,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      }));
+    } catch (err) {
+      console.warn('Prisma projects fetch failed, falling back:', err);
+    }
+  }
+
+  const projects = readJson<Project[]>(PROJECTS_FILE, []);
+  const leads = readJson<Lead[]>(DATA_FILE, []);
+  return projects.map((p) => ({
+    ...p,
+    leadCount: leads.filter((l) => l.projectId === p.id).length,
+  }));
+}
+
+export async function createProject(data: {
+  name: string;
+  description?: string;
+  category?: string;
+  targetCity?: string;
+}): Promise<Project> {
+  if (hasDbConnection) {
+    try {
+      const p = await prisma.project.create({
+        data: {
+          name: data.name,
+          description: data.description,
+          category: data.category,
+          targetCity: data.targetCity,
+        },
+      });
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        category: p.category,
+        targetCity: p.targetCity,
+        leadCount: 0,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      };
+    } catch (err) {
+      console.warn('Prisma create project failed, falling back:', err);
+    }
+  }
+
+  const projects = readJson<Project[]>(PROJECTS_FILE, []);
+  const newProject: Project = {
+    id: `proj_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    name: data.name,
+    description: data.description,
+    category: data.category,
+    targetCity: data.targetCity,
+    leadCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  projects.unshift(newProject);
+  writeJson(PROJECTS_FILE, projects);
+  return newProject;
+}
+
+export async function deleteProject(id: string): Promise<boolean> {
+  if (hasDbConnection) {
+    try {
+      await prisma.project.delete({ where: { id } });
+      return true;
+    } catch (err) {
+      console.warn('Prisma delete project failed:', err);
+    }
+  }
+
+  const projects = readJson<Project[]>(PROJECTS_FILE, []);
+  const filtered = projects.filter((p) => p.id !== id);
+  writeJson(PROJECTS_FILE, filtered);
+  return true;
+}
+
+/* =========================================================================
+   MAILBOXES CRUD
+   ========================================================================= */
+
+export async function getAllMailboxes(): Promise<Mailbox[]> {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  if (hasDbConnection) {
+    try {
+      const records = await prisma.mailbox.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Auto-reset daily counts if date rolled over
+      const mailboxes = await Promise.all(
+        records.map(async (m) => {
+          if (m.lastResetDate !== todayStr) {
+            return await prisma.mailbox.update({
+              where: { id: m.id },
+              data: { sentToday: 0, lastResetDate: todayStr },
+            });
+          }
+          return m;
+        })
+      );
+
+      return mailboxes.map((m) => ({
+        id: m.id,
+        email: m.email,
+        senderName: m.senderName,
+        smtpHost: m.smtpHost,
+        smtpPort: m.smtpPort,
+        smtpSecure: m.smtpSecure,
+        smtpUser: m.smtpUser,
+        smtpPass: m.smtpPass,
+        replyTo: m.replyTo,
+        dailyLimit: m.dailyLimit,
+        sentToday: m.sentToday,
+        lastResetDate: m.lastResetDate,
+        isActive: m.isActive,
+        createdAt: m.createdAt.toISOString(),
+        updatedAt: m.updatedAt.toISOString(),
+      }));
+    } catch (err) {
+      console.warn('Prisma mailboxes fetch failed, falling back:', err);
+    }
+  }
+
+  const mailboxes = readJson<Mailbox[]>(MAILBOXES_FILE, []);
+  // reset if needed
+  const updated = mailboxes.map((m) => {
+    if (m.lastResetDate !== todayStr) {
+      return { ...m, sentToday: 0, lastResetDate: todayStr };
+    }
+    return m;
+  });
+  writeJson(MAILBOXES_FILE, updated);
+  return updated;
+}
+
+export async function saveMailbox(data: Omit<Mailbox, 'id' | 'createdAt' | 'updatedAt' | 'sentToday' | 'lastResetDate'> & { id?: string }): Promise<Mailbox> {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  if (hasDbConnection) {
+    try {
+      if (data.id) {
+        const m = await prisma.mailbox.update({
+          where: { id: data.id },
+          data: {
+            email: data.email,
+            senderName: data.senderName,
+            smtpHost: data.smtpHost,
+            smtpPort: data.smtpPort,
+            smtpSecure: data.smtpSecure,
+            smtpUser: data.smtpUser,
+            smtpPass: data.smtpPass,
+            replyTo: data.replyTo,
+            dailyLimit: data.dailyLimit,
+            isActive: data.isActive,
+          },
+        });
+        return {
+          ...m,
+          createdAt: m.createdAt.toISOString(),
+          updatedAt: m.updatedAt.toISOString(),
+        };
+      } else {
+        const m = await prisma.mailbox.create({
+          data: {
+            email: data.email,
+            senderName: data.senderName,
+            smtpHost: data.smtpHost || 'smtp.gmail.com',
+            smtpPort: data.smtpPort || 465,
+            smtpSecure: data.smtpSecure ?? true,
+            smtpUser: data.smtpUser,
+            smtpPass: data.smtpPass,
+            replyTo: data.replyTo,
+            dailyLimit: data.dailyLimit || 50,
+            sentToday: 0,
+            lastResetDate: todayStr,
+            isActive: data.isActive ?? true,
+          },
+        });
+        return {
+          ...m,
+          createdAt: m.createdAt.toISOString(),
+          updatedAt: m.updatedAt.toISOString(),
+        };
+      }
+    } catch (err) {
+      console.warn('Prisma save mailbox failed, falling back:', err);
+    }
+  }
+
+  const mailboxes = readJson<Mailbox[]>(MAILBOXES_FILE, []);
+  if (data.id) {
+    const idx = mailboxes.findIndex((m) => m.id === data.id);
+    if (idx !== -1) {
+      mailboxes[idx] = {
+        ...mailboxes[idx],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      writeJson(MAILBOXES_FILE, mailboxes);
+      return mailboxes[idx];
+    }
+  }
+
+  const newMailbox: Mailbox = {
+    id: `mb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    ...data,
+    sentToday: 0,
+    lastResetDate: todayStr,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  mailboxes.push(newMailbox);
+  writeJson(MAILBOXES_FILE, mailboxes);
+  return newMailbox;
+}
+
+export async function deleteMailbox(id: string): Promise<boolean> {
+  if (hasDbConnection) {
+    try {
+      await prisma.mailbox.delete({ where: { id } });
+      return true;
+    } catch (err) {
+      console.warn('Prisma delete mailbox failed:', err);
+    }
+  }
+
+  const mailboxes = readJson<Mailbox[]>(MAILBOXES_FILE, []);
+  const filtered = mailboxes.filter((m) => m.id !== id);
+  writeJson(MAILBOXES_FILE, filtered);
+  return true;
+}
+
+export async function incrementMailboxSent(mailboxId: string): Promise<void> {
+  if (hasDbConnection) {
+    try {
+      await prisma.mailbox.update({
+        where: { id: mailboxId },
+        data: { sentToday: { increment: 1 } },
+      });
+      return;
+    } catch (err) {
+      console.warn('Prisma increment mailbox sent failed:', err);
+    }
+  }
+
+  const mailboxes = readJson<Mailbox[]>(MAILBOXES_FILE, []);
+  const m = mailboxes.find((x) => x.id === mailboxId);
+  if (m) {
+    m.sentToday = (m.sentToday || 0) + 1;
+    writeJson(MAILBOXES_FILE, mailboxes);
+  }
+}
+
+/* =========================================================================
+   CAMPAIGNS CRUD
+   ========================================================================= */
+
+export async function getAllCampaigns(): Promise<Campaign[]> {
+  if (hasDbConnection) {
+    try {
+      const records = await prisma.campaign.findMany({
+        include: {
+          project: { select: { name: true } },
+          _count: { select: { emailLogs: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return records.map((c) => ({
+        id: c.id,
+        projectId: c.projectId,
+        projectName: c.project?.name,
+        name: c.name,
+        subject: c.subject,
+        bodyTemplate: c.bodyTemplate,
+        delaySeconds: c.delaySeconds,
+        status: c.status as Campaign['status'],
+        sentCount: c._count.emailLogs,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+      }));
+    } catch (err) {
+      console.warn('Prisma campaigns fetch failed, falling back:', err);
+    }
+  }
+
+  return readJson<Campaign[]>(CAMPAIGNS_FILE, []);
+}
+
+export async function createCampaign(data: {
+  projectId: string;
+  name: string;
+  subject: string;
+  bodyTemplate: string;
+  delaySeconds?: number;
+}): Promise<Campaign> {
+  if (hasDbConnection) {
+    try {
+      const c = await prisma.campaign.create({
+        data: {
+          projectId: data.projectId,
+          name: data.name,
+          subject: data.subject,
+          bodyTemplate: data.bodyTemplate,
+          delaySeconds: data.delaySeconds || 90,
+          status: 'DRAFT',
+        },
+        include: { project: { select: { name: true } } },
+      });
+
+      return {
+        id: c.id,
+        projectId: c.projectId,
+        projectName: c.project?.name,
+        name: c.name,
+        subject: c.subject,
+        bodyTemplate: c.bodyTemplate,
+        delaySeconds: c.delaySeconds,
+        status: 'DRAFT',
+        sentCount: 0,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+      };
+    } catch (err) {
+      console.warn('Prisma create campaign failed, falling back:', err);
+    }
+  }
+
+  const campaigns = readJson<Campaign[]>(CAMPAIGNS_FILE, []);
+  const newCamp: Campaign = {
+    id: `camp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    projectId: data.projectId,
+    name: data.name,
+    subject: data.subject,
+    bodyTemplate: data.bodyTemplate,
+    delaySeconds: data.delaySeconds || 90,
+    status: 'DRAFT',
+    sentCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  campaigns.unshift(newCamp);
+  writeJson(CAMPAIGNS_FILE, campaigns);
+  return newCamp;
+}
+
+export async function updateCampaignStatus(id: string, status: Campaign['status']): Promise<void> {
+  if (hasDbConnection) {
+    try {
+      await prisma.campaign.update({
+        where: { id },
+        data: { status },
+      });
+      return;
+    } catch (err) {
+      console.warn('Prisma update campaign status failed:', err);
+    }
+  }
+
+  const campaigns = readJson<Campaign[]>(CAMPAIGNS_FILE, []);
+  const c = campaigns.find((x) => x.id === id);
+  if (c) {
+    c.status = status;
+    c.updatedAt = new Date().toISOString();
+    writeJson(CAMPAIGNS_FILE, campaigns);
+  }
+}
+
+/* =========================================================================
+   EMAIL LOGS
+   ========================================================================= */
+
+export async function createEmailLog(data: {
+  campaignId: string;
+  leadId: string;
+  mailboxId?: string | null;
+  recipient: string;
+  subject: string;
+  status: 'PENDING' | 'SENT' | 'FAILED';
+  error?: string | null;
+}): Promise<EmailLog> {
+  if (hasDbConnection) {
+    try {
+      const log = await prisma.emailLog.create({
+        data: {
+          campaignId: data.campaignId,
+          leadId: data.leadId,
+          mailboxId: data.mailboxId || null,
+          recipient: data.recipient,
+          subject: data.subject,
+          status: data.status,
+          error: data.error || null,
+          sentAt: data.status === 'SENT' ? new Date() : null,
+        },
+        include: { mailbox: { select: { email: true } } },
+      });
+
+      return {
+        id: log.id,
+        campaignId: log.campaignId,
+        leadId: log.leadId,
+        mailboxId: log.mailboxId,
+        mailboxEmail: log.mailbox?.email,
+        recipient: log.recipient,
+        subject: log.subject,
+        status: log.status as EmailLog['status'],
+        error: log.error,
+        sentAt: log.sentAt ? log.sentAt.toISOString() : null,
+        createdAt: log.createdAt.toISOString(),
+      };
+    } catch (err) {
+      console.warn('Prisma create email log failed, falling back:', err);
+    }
+  }
+
+  const logs = readJson<EmailLog[]>(EMAIL_LOGS_FILE, []);
+  const newLog: EmailLog = {
+    id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    ...data,
+    sentAt: data.status === 'SENT' ? new Date().toISOString() : null,
+    createdAt: new Date().toISOString(),
+  };
+  logs.unshift(newLog);
+  writeJson(EMAIL_LOGS_FILE, logs);
+  return newLog;
+}
+
+export async function getCampaignEmailLogs(campaignId: string): Promise<EmailLog[]> {
+  if (hasDbConnection) {
+    try {
+      const logs = await prisma.emailLog.findMany({
+        where: { campaignId },
+        include: { mailbox: { select: { email: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return logs.map((l) => ({
+        id: l.id,
+        campaignId: l.campaignId,
+        leadId: l.leadId,
+        mailboxId: l.mailboxId,
+        mailboxEmail: l.mailbox?.email,
+        recipient: l.recipient,
+        subject: l.subject,
+        status: l.status as EmailLog['status'],
+        error: l.error,
+        sentAt: l.sentAt ? l.sentAt.toISOString() : null,
+        createdAt: l.createdAt.toISOString(),
+      }));
+    } catch (err) {
+      console.warn('Prisma email logs fetch failed, falling back:', err);
+    }
+  }
+
+  const logs = readJson<EmailLog[]>(EMAIL_LOGS_FILE, []);
+  return logs.filter((l) => l.campaignId === campaignId);
 }

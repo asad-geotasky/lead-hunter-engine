@@ -8,6 +8,18 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
+model Project {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  targetCity  String?
+  leads       Lead[]
+  campaigns   Campaign[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
 model Lead {
   id                String    @id @default(cuid())
   placeId           String    @unique
@@ -16,6 +28,7 @@ model Lead {
   address           String
   city              String
   phone             String
+  email             String?
   rating            Float     @default(0)
   reviewCount       Int       @default(0)
   website           String?
@@ -23,6 +36,10 @@ model Lead {
   opportunityScore  Int       @default(0)
   stage             String    @default("DISCOVERED")
   
+  // Project Workspace Relation
+  projectId         String?
+  project           Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
   // JSON payloads for deep enrichment & intelligence
   scoreBreakdown    Json      @default("[]")
   phoneIntelligence Json      @default("{}")
@@ -34,6 +51,7 @@ model Lead {
   // Relational CRM activity
   notes             Note[]
   callLogs          CallLog[]
+  emailLogs         EmailLog[]
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -42,6 +60,7 @@ model Lead {
   @@index([category])
   @@index([opportunityScore])
   @@index([stage])
+  @@index([projectId])
 }
 
 model Note {
@@ -62,5 +81,59 @@ model CallLog {
   outcome   String
   createdAt DateTime @default(now())
 
+  @@index([leadId])
+}
+
+model Mailbox {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  senderName    String
+  smtpHost      String     @default("smtp.gmail.com")
+  smtpPort      Int        @default(465)
+  smtpSecure    Boolean    @default(true)
+  smtpUser      String
+  smtpPass      String     // Google App Password
+  replyTo       String?    // Primary inbox address to receive replies
+  dailyLimit    Int        @default(50)
+  sentToday     Int        @default(0)
+  lastResetDate String     @default("") // YYYY-MM-DD
+  isActive      Boolean    @default(true)
+  emailLogs     EmailLog[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Campaign {
+  id            String     @id @default(cuid())
+  projectId     String
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name          String
+  subject       String
+  bodyTemplate  String
+  delaySeconds  Int        @default(90) // Anti-spam spacing between emails
+  status        String     @default("DRAFT") // DRAFT | RUNNING | COMPLETED | PAUSED
+  emailLogs     EmailLog[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([projectId])
+}
+
+model EmailLog {
+  id          String    @id @default(cuid())
+  campaignId  String
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId      String
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  mailboxId   String?
+  mailbox     Mailbox?  @relation(fields: [mailboxId], references: [id], onDelete: SetNull)
+  recipient   String
+  subject     String
+  status      String    @default("PENDING") // PENDING | SENT | FAILED
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([campaignId])
   @@index([leadId])
 }

@@ -9,12 +9,14 @@ export async function GET(req: NextRequest) {
     const noWebsiteOnly = searchParams.get('noWebsite') === 'true';
     const minScore = parseInt(searchParams.get('minScore') || '0', 10);
     const search = searchParams.get('q') || undefined;
+    const projectId = searchParams.get('projectId') || undefined;
 
     const leads = await getAllLeads({
       stage,
       noWebsite: noWebsiteOnly,
       minScore,
       search,
+      projectId,
     });
 
     return NextResponse.json({ success: true, count: leads.length, leads });

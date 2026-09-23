@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchGooglePlaces } from '@/lib/search/googlePlaces';
-import { generateMockLeads } from '@/lib/search/mockSearch';
+import { executeUnifiedSearch } from '@/lib/search/unifiedSearch';
 import { upsertLeads } from '@/lib/storage';
+import { SearchProvider } from '@/types/lead';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { niche, city, apiKey, filterNoWebsite, minScore } = body;
+    const {
+      niche,
+      city,
+      provider = 'mock',
+      apiKey,
+      projectId,
+      filterNoWebsite,
+      minScore,
+      limit = 20,
+    } = body;
 
     if (!niche || !city) {
       return NextResponse.json(
@@ -15,25 +24,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let leads = [];
-
-    if (apiKey && apiKey.trim() !== '') {
-      leads = await searchGooglePlaces(`${niche} in ${city}`, apiKey.trim(), city, niche);
-    } else {
-      leads = generateMockLeads(niche, city, 10);
-    }
-
-    if (filterNoWebsite) {
-      leads = leads.filter((l) => !l.website);
-    }
-    if (minScore && typeof minScore === 'number') {
-      leads = leads.filter((l) => l.opportunityScore >= minScore);
-    }
+    const leads = await executeUnifiedSearch({
+      niche: niche.trim(),
+      city: city.trim(),
+      provider: provider as SearchProvider,
+      apiKey: apiKey ? apiKey.trim() : undefined,
+      projectId,
+      filterNoWebsite: Boolean(filterNoWebsite),
+      minScore: minScore ? Number(minScore) : 0,
+      limit: limit ? Number(limit) : 20,
+    });
 
     const stats = await upsertLeads(leads);
 
     return NextResponse.json({
       success: true,
+      provider,
       count: leads.length,
       stats,
       leads,
