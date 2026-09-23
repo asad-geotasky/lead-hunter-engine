@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Lead {
+  id                String    @id @default(cuid())
+  placeId           String    @unique
+  businessName      String
+  category          String
+  address           String
+  city              String
+  phone             String
+  rating            Float     @default(0)
+  reviewCount       Int       @default(0)
+  website           String?
+  googleMapsUrl     String    @default("")
+  opportunityScore  Int       @default(0)
+  stage             String    @default("DISCOVERED")
+  
+  // JSON payloads for deep enrichment & intelligence
+  scoreBreakdown    Json      @default("[]")
+  phoneIntelligence Json      @default("{}")
+  ownerDiscovery    Json      @default("{}")
+  websiteAudit      Json      @default("{}")
+  outreach          Json?
+  reviews           Json      @default("[]")
+
+  // Relational CRM activity
+  notes             Note[]
+  callLogs          CallLog[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([city])
+  @@index([category])
+  @@index([opportunityScore])
+  @@index([stage])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}
+
+model CallLog {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  summary   String
+  outcome   String
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}

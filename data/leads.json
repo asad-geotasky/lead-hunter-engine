@@ -1,0 +1,656 @@
+[
+  {
+    "id": "mock_1790177959336_0_evcm7",
+    "placeId": "mock_place_0_austin, tx",
+    "businessName": "Apex Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "100 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(512) 200-1000",
+    "rating": 4.8,
+    "reviewCount": 7,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 5,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": null,
+    "googleMapsUrl": "https://maps.google.com/?q=Apex%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "MOBILE",
+      "carrier": "T-Mobile USA",
+      "isCallableMobile": true,
+      "confidence": "HIGH",
+      "notes": "Classified as direct wireless line"
+    },
+    "ownerDiscovery": {
+      "ownerName": "David Miller",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/apex.austin, tx",
+        "yelp": "https://yelp.com/biz/apex-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": false,
+      "hasSsl": true,
+      "isMobileResponsive": true,
+      "staleCopyrightYear": 2024,
+      "issuesDetected": [
+        "No website found on Google Places profile"
+      ]
+    },
+    "pipeline": {
+      "stage": "DEMO_READY",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.686Z",
+    "updatedAt": "2026-09-23T16:32:45.889Z",
+    "opportunityScore": 85,
+    "scoreBreakdown": [
+      {
+        "reason": "No website listed (Prime Web-Dev Target)",
+        "points": 35
+      },
+      {
+        "reason": "High rating (4.8★) with low review count (7) - primed for digital expansion",
+        "points": 20
+      },
+      {
+        "reason": "Verified direct mobile number (Enables direct SMS & owner calls)",
+        "points": 15
+      },
+      {
+        "reason": "Owner identified: David Miller (State Corporate Registry)",
+        "points": 15
+      }
+    ],
+    "outreach": {
+      "coldEmailSubject": "Quick question regarding Apex Plumbers of Austin, TX in Austin, TX (site preview)",
+      "coldEmailBody": "Hi David,\n\nI was looking for top-rated Plumbers services in Austin, TX and came across Apex Plumbers of Austin, TX. Your customer reviews are impressive—especially noting \"Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and...\".\n\nI noticed you don't have a modern website linked to your Google profile, which means you're likely losing 10-15 direct call inquiries every month to competitors who show up with instant mobile booking.\n\nInstead of just pitching you, my team actually mocked up a custom, mobile-friendly landing page for Apex Plumbers of Austin, TX using your real reviews and services:\n\n👉 View Your Live Preview: http://localhost:3000/preview/mock_1790177959336_0_evcm7\n📸 (I've also attached a snapshot preview of the design for your convenience).\n\nAre you open to a quick 3-minute chat this week to see how this could bring you 5-10 extra booked jobs per month? (No cost or commitment either way).\n\nBest regards,\nAgency Lead Engine",
+      "htmlEmailBody": "<div style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; max-width: 600px;\">\n  <p>Hi David,</p>\n  <p>I was looking for top-rated Plumbers services in Austin, TX and came across <strong>Apex Plumbers of Austin, TX</strong>. Your customer reviews are impressive—especially noting \"Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and...\".</p>\n  <p>I noticed you don't have a modern website linked to your Google profile, which means you're likely losing 10-15 direct calls every month to competitors.</p>\n  <p>Instead of just pitching you, my team mocked up a custom, mobile-friendly website demo for <strong>Apex Plumbers of Austin, TX</strong>:</p>\n  \n  <div style=\"margin: 20px 0; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);\">\n    <a href=\"http://localhost:3000/preview/mock_1790177959336_0_evcm7\" target=\"_blank\" style=\"text-decoration: none; display: block;\">\n      <img src=\"http://localhost:3000/screenshots/mock_1790177959336_0_evcm7.png\" alt=\"Website Mockup for Apex Plumbers of Austin, TX\" style=\"width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0;\" />\n      <div style=\"background-color: #2563eb; color: #ffffff; text-align: center; padding: 12px; font-weight: bold; font-size: 14px;\">\n        👉 Click Here to Test Your Live Interactive Demo &rarr;\n      </div>\n    </a>\n  </div>\n\n  <p>Are you open to a quick 3-minute chat this week to see how this could bring you 5-10 extra booked jobs per month? (No cost or commitment either way).</p>\n  <p>Best regards,<br/><strong>Agency Lead Engine</strong></p>\n</div>",
+      "smsPitch": "Hey David, saw Apex Plumbers of Austin, TX on Google in Austin, TX. Love the reviews! Built you a quick free demo website preview so local customers can book you faster: http://localhost:3000/preview/mock_1790177959336_0_evcm7 - let me know what you think!",
+      "phoneScript": {
+        "gatekeeperHook": "Hi there! I was hoping to speak with David Miller quickly regarding the new web preview we designed for Apex Plumbers of Austin, TX in Austin, TX. Are they in today or on a job?",
+        "ownerPitch": "Hey David, this is [Your Name]. I know you're busy running Apex Plumbers of Austin, TX, so I'll be brief. I saw you guys have stellar 4.8★ reviews on Google, but no direct website for people on smartphones to book you instantly. I actually built a free working preview of what your site could look like—pulling your best reviews. It's live right now at http://localhost:3000/preview/mock_1790177959336_0_evcm7. Can I text or email you the link real quick to take a look?",
+        "objectionHandler": "• If they say \"We already get enough word-of-mouth\": \"That's awesome—most great Plumbers companies survive on referrals. But right now, high-paying jobs in Austin, TX are searching on Google and going straight to competitors. This just plugs that leak.\"\n• If they say \"Just use Facebook\": \"Facebook is great for existing clients, but when people have an emergency in Austin, TX, they search Google. A clean 1-page site converts those searchers into callers immediately.\"\n• If they say \"Send me an email\": \"Will do right away! What's the best email address where you check notifications personally?\""
+      },
+      "mockupSlug": "mock_1790177959336_0_evcm7",
+      "mockupUrl": "http://localhost:3000/preview/mock_1790177959336_0_evcm7",
+      "mockupScreenshotUrl": "/screenshots/mock_1790177959336_0_evcm7.png"
+    }
+  },
+  {
+    "id": "mock_1790177959337_1_y9ni0",
+    "placeId": "mock_place_1_austin, tx",
+    "businessName": "Precision Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "145 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(513) 217-1243",
+    "rating": 4.9,
+    "reviewCount": 14,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 5,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": null,
+    "googleMapsUrl": "https://maps.google.com/?q=Precision%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "MOBILE",
+      "carrier": "T-Mobile USA",
+      "isCallableMobile": true,
+      "confidence": "HIGH",
+      "notes": "Classified as direct wireless line"
+    },
+    "ownerDiscovery": {
+      "ownerName": "Emily Smith",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/precision.austin, tx",
+        "yelp": "https://yelp.com/biz/precision-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": false,
+      "hasSsl": true,
+      "isMobileResponsive": true,
+      "staleCopyrightYear": 2024,
+      "issuesDetected": [
+        "No website found on Google Places profile"
+      ]
+    },
+    "pipeline": {
+      "stage": "DISCOVERED",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.687Z",
+    "updatedAt": "2026-09-23T16:23:39.694Z",
+    "opportunityScore": 85,
+    "scoreBreakdown": [
+      {
+        "reason": "No website listed (Prime Web-Dev Target)",
+        "points": 35
+      },
+      {
+        "reason": "High rating (4.9★) with low review count (14) - primed for digital expansion",
+        "points": 20
+      },
+      {
+        "reason": "Verified direct mobile number (Enables direct SMS & owner calls)",
+        "points": 15
+      },
+      {
+        "reason": "Owner identified: Emily Smith (State Corporate Registry)",
+        "points": 15
+      }
+    ]
+  },
+  {
+    "id": "mock_1790177959337_2_6gjjg",
+    "placeId": "mock_place_2_austin, tx",
+    "businessName": "ProMaster Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "190 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(514) 234-1486",
+    "rating": 4.2,
+    "reviewCount": 42,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 4,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": "https://www.promasterplumbers.com",
+    "googleMapsUrl": "https://maps.google.com/?q=ProMaster%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "LANDLINE",
+      "carrier": "AT&T Landline Network",
+      "isCallableMobile": false,
+      "confidence": "HIGH",
+      "notes": "Front desk or office routing"
+    },
+    "ownerDiscovery": {
+      "ownerName": "James Wilson",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/promaster.austin, tx",
+        "yelp": "https://yelp.com/biz/promaster-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": true,
+      "hasSsl": true,
+      "isMobileResponsive": false,
+      "cmsDetected": "WordPress 4.8",
+      "staleCopyrightYear": 2018,
+      "issuesDetected": [
+        "Non-responsive viewport",
+        "Outdated copyright"
+      ]
+    },
+    "pipeline": {
+      "stage": "DISCOVERED",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.687Z",
+    "updatedAt": "2026-09-23T16:23:39.694Z",
+    "opportunityScore": 45,
+    "scoreBreakdown": [
+      {
+        "reason": "Website is not mobile responsive",
+        "points": 15
+      },
+      {
+        "reason": "Outdated website copyright (2018)",
+        "points": 10
+      },
+      {
+        "reason": "Direct business phone available",
+        "points": 5
+      },
+      {
+        "reason": "Owner identified: James Wilson (State Corporate Registry)",
+        "points": 15
+      }
+    ]
+  },
+  {
+    "id": "mock_1790177959337_3_o9lc8",
+    "placeId": "mock_place_3_austin, tx",
+    "businessName": "Heritage Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "235 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(515) 251-1729",
+    "rating": 4.6,
+    "reviewCount": 19,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 5,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": null,
+    "googleMapsUrl": "https://maps.google.com/?q=Heritage%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "LANDLINE",
+      "carrier": "AT&T Landline Network",
+      "isCallableMobile": false,
+      "confidence": "HIGH",
+      "notes": "Front desk or office routing"
+    },
+    "ownerDiscovery": {
+      "ownerName": "Ashley Taylor",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/heritage.austin, tx",
+        "yelp": "https://yelp.com/biz/heritage-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": false,
+      "hasSsl": true,
+      "isMobileResponsive": true,
+      "staleCopyrightYear": 2024,
+      "issuesDetected": [
+        "No website found on Google Places profile"
+      ]
+    },
+    "pipeline": {
+      "stage": "DEMO_READY",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.687Z",
+    "updatedAt": "2026-09-23T16:23:39.694Z",
+    "opportunityScore": 75,
+    "scoreBreakdown": [
+      {
+        "reason": "No website listed (Prime Web-Dev Target)",
+        "points": 35
+      },
+      {
+        "reason": "High rating (4.6★) with low review count (19) - primed for digital expansion",
+        "points": 20
+      },
+      {
+        "reason": "Direct business phone available",
+        "points": 5
+      },
+      {
+        "reason": "Owner identified: Ashley Taylor (State Corporate Registry)",
+        "points": 15
+      }
+    ]
+  },
+  {
+    "id": "mock_1790177959337_4_898c7",
+    "placeId": "mock_place_4_austin, tx",
+    "businessName": "Reliable Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "280 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(516) 268-1972",
+    "rating": 5,
+    "reviewCount": 5,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 5,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": null,
+    "googleMapsUrl": "https://maps.google.com/?q=Reliable%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "MOBILE",
+      "carrier": "T-Mobile USA",
+      "isCallableMobile": true,
+      "confidence": "HIGH",
+      "notes": "Classified as direct wireless line"
+    },
+    "ownerDiscovery": {
+      "ownerName": "Michael Thomas",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/reliable.austin, tx",
+        "yelp": "https://yelp.com/biz/reliable-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": false,
+      "hasSsl": true,
+      "isMobileResponsive": true,
+      "staleCopyrightYear": 2024,
+      "issuesDetected": [
+        "No website found on Google Places profile"
+      ]
+    },
+    "pipeline": {
+      "stage": "DISCOVERED",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.688Z",
+    "updatedAt": "2026-09-23T16:23:39.694Z",
+    "opportunityScore": 85,
+    "scoreBreakdown": [
+      {
+        "reason": "No website listed (Prime Web-Dev Target)",
+        "points": 35
+      },
+      {
+        "reason": "High rating (5★) with low review count (5) - primed for digital expansion",
+        "points": 20
+      },
+      {
+        "reason": "Verified direct mobile number (Enables direct SMS & owner calls)",
+        "points": 15
+      },
+      {
+        "reason": "Owner identified: Michael Thomas (State Corporate Registry)",
+        "points": 15
+      }
+    ]
+  },
+  {
+    "id": "mock_1790177959337_5_f4h9v",
+    "placeId": "mock_place_5_austin, tx",
+    "businessName": "Summit Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "325 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(517) 285-2215",
+    "rating": 4.7,
+    "reviewCount": 88,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 5,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": "https://www.summitplumbers.com",
+    "googleMapsUrl": "https://maps.google.com/?q=Summit%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "LANDLINE",
+      "carrier": "AT&T Landline Network",
+      "isCallableMobile": false,
+      "confidence": "HIGH",
+      "notes": "Front desk or office routing"
+    },
+    "ownerDiscovery": {
+      "ownerName": "Jessica Miller",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/summit.austin, tx",
+        "yelp": "https://yelp.com/biz/summit-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": true,
+      "hasSsl": true,
+      "isMobileResponsive": true,
+      "cmsDetected": "Custom HTML",
+      "staleCopyrightYear": 2024,
+      "issuesDetected": []
+    },
+    "pipeline": {
+      "stage": "DEMO_READY",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.688Z",
+    "updatedAt": "2026-09-23T17:41:53.168Z",
+    "opportunityScore": 30,
+    "scoreBreakdown": [
+      {
+        "reason": "Exceptional reputation (4.7★)",
+        "points": 10
+      },
+      {
+        "reason": "Direct business phone available",
+        "points": 5
+      },
+      {
+        "reason": "Owner identified: Jessica Miller (State Corporate Registry)",
+        "points": 15
+      }
+    ],
+    "outreach": {
+      "coldEmailSubject": "Quick question regarding Summit Plumbers of Austin, TX in Austin, TX (site preview)",
+      "coldEmailBody": "Hi Jessica,\n\nI was looking for top-rated Plumbers services in Austin, TX and came across Summit Plumbers of Austin, TX. Your customer reviews are impressive—especially noting \"Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and...\".\n\nI noticed you don't have a modern website linked to your Google profile, which means you're likely losing 10-15 direct call inquiries every month to competitors who show up with instant mobile booking.\n\nInstead of just pitching you, my team actually mocked up a custom, mobile-friendly landing page for Summit Plumbers of Austin, TX using your real reviews and services:\n\n👉 View Your Live Preview: http://localhost:3000/preview/mock_1790177959337_5_f4h9v\n📸 (I've also attached a snapshot preview of the design for your convenience).\n\nAre you open to a quick 3-minute chat this week to see how this could bring you 5-10 extra booked jobs per month? (No cost or commitment either way).\n\nBest regards,\nAgency Lead Engine",
+      "htmlEmailBody": "<div style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; max-width: 600px;\">\n  <p>Hi Jessica,</p>\n  <p>I was looking for top-rated Plumbers services in Austin, TX and came across <strong>Summit Plumbers of Austin, TX</strong>. Your customer reviews are impressive—especially noting \"Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and...\".</p>\n  <p>I noticed you don't have a modern website linked to your Google profile, which means you're likely losing 10-15 direct calls every month to competitors.</p>\n  <p>Instead of just pitching you, my team mocked up a custom, mobile-friendly website demo for <strong>Summit Plumbers of Austin, TX</strong>:</p>\n  \n  <div style=\"margin: 20px 0; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);\">\n    <a href=\"http://localhost:3000/preview/mock_1790177959337_5_f4h9v\" target=\"_blank\" style=\"text-decoration: none; display: block;\">\n      <img src=\"http://localhost:3000/screenshots/mock_1790177959337_5_f4h9v.png\" alt=\"Website Mockup for Summit Plumbers of Austin, TX\" style=\"width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0;\" />\n      <div style=\"background-color: #2563eb; color: #ffffff; text-align: center; padding: 12px; font-weight: bold; font-size: 14px;\">\n        👉 Click Here to Test Your Live Interactive Demo &rarr;\n      </div>\n    </a>\n  </div>\n\n  <p>Are you open to a quick 3-minute chat this week to see how this could bring you 5-10 extra booked jobs per month? (No cost or commitment either way).</p>\n  <p>Best regards,<br/><strong>Agency Lead Engine</strong></p>\n</div>",
+      "smsPitch": "Hi Summit Plumbers of Austin, TX team, saw your 5-star reviews in Austin, TX! We built a free modern website preview for you: http://localhost:3000/preview/mock_1790177959337_5_f4h9v - would love to pass it to Jessica Miller!",
+      "phoneScript": {
+        "gatekeeperHook": "Hi there! I was hoping to speak with Jessica Miller quickly regarding the new web preview we designed for Summit Plumbers of Austin, TX in Austin, TX. Are they in today or on a job?",
+        "ownerPitch": "Hey Jessica, this is [Your Name]. I know you're busy running Summit Plumbers of Austin, TX, so I'll be brief. I saw you guys have stellar 4.7★ reviews on Google, but no direct website for people on smartphones to book you instantly. I actually built a free working preview of what your site could look like—pulling your best reviews. It's live right now at http://localhost:3000/preview/mock_1790177959337_5_f4h9v. Can I text or email you the link real quick to take a look?",
+        "objectionHandler": "• If they say \"We already get enough word-of-mouth\": \"That's awesome—most great Plumbers companies survive on referrals. But right now, high-paying jobs in Austin, TX are searching on Google and going straight to competitors. This just plugs that leak.\"\n• If they say \"Just use Facebook\": \"Facebook is great for existing clients, but when people have an emergency in Austin, TX, they search Google. A clean 1-page site converts those searchers into callers immediately.\"\n• If they say \"Send me an email\": \"Will do right away! What's the best email address where you check notifications personally?\""
+      },
+      "mockupSlug": "mock_1790177959337_5_f4h9v",
+      "mockupUrl": "http://localhost:3000/preview/mock_1790177959337_5_f4h9v",
+      "mockupScreenshotUrl": "/screenshots/mock_1790177959337_5_f4h9v.png"
+    }
+  },
+  {
+    "id": "mock_1790177959337_6_l7ij0",
+    "placeId": "mock_place_6_austin, tx",
+    "businessName": "Cornerstone Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "370 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(518) 302-2458",
+    "rating": 4.3,
+    "reviewCount": 11,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 4,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": null,
+    "googleMapsUrl": "https://maps.google.com/?q=Cornerstone%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "MOBILE",
+      "carrier": "T-Mobile USA",
+      "isCallableMobile": true,
+      "confidence": "HIGH",
+      "notes": "Classified as direct wireless line"
+    },
+    "ownerDiscovery": {
+      "ownerName": "William Smith",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/cornerstone.austin, tx",
+        "yelp": "https://yelp.com/biz/cornerstone-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": false,
+      "hasSsl": true,
+      "isMobileResponsive": true,
+      "staleCopyrightYear": 2024,
+      "issuesDetected": [
+        "No website found on Google Places profile"
+      ]
+    },
+    "pipeline": {
+      "stage": "DISCOVERED",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.688Z",
+    "updatedAt": "2026-09-23T16:23:39.694Z",
+    "opportunityScore": 85,
+    "scoreBreakdown": [
+      {
+        "reason": "No website listed (Prime Web-Dev Target)",
+        "points": 35
+      },
+      {
+        "reason": "High rating (4.3★) with low review count (11) - primed for digital expansion",
+        "points": 20
+      },
+      {
+        "reason": "Verified direct mobile number (Enables direct SMS & owner calls)",
+        "points": 15
+      },
+      {
+        "reason": "Owner identified: William Smith (State Corporate Registry)",
+        "points": 15
+      }
+    ]
+  },
+  {
+    "id": "mock_1790177959337_7_9qj74",
+    "placeId": "mock_place_7_austin, tx",
+    "businessName": "Blue Ribbon Plumbers of Austin, TX",
+    "category": "Plumbers",
+    "address": "415 Main St, Austin, TX, State",
+    "city": "Austin, TX",
+    "phone": "(519) 319-2701",
+    "rating": 3.8,
+    "reviewCount": 18,
+    "reviews": [
+      {
+        "author": "Marcus Vance",
+        "text": "Called them on a Tuesday afternoon. They showed up quickly, diagnosed the issue with great care, and the pricing was super fair. Highly recommend them in Austin, TX!",
+        "rating": 5,
+        "relativeTime": "2 weeks ago"
+      },
+      {
+        "author": "Elena Rostova",
+        "text": "Top notch professionalism! You can tell they take true pride in their craft. Will definitely be using them again.",
+        "rating": 4,
+        "relativeTime": "1 month ago"
+      }
+    ],
+    "website": "https://www.blue ribbonplumbers.com",
+    "googleMapsUrl": "https://maps.google.com/?q=Blue%20Ribbon%20Plumbers%20of%20Austin%2C%20TX",
+    "phoneIntelligence": {
+      "lineType": "LANDLINE",
+      "carrier": "AT&T Landline Network",
+      "isCallableMobile": false,
+      "confidence": "HIGH",
+      "notes": "Front desk or office routing"
+    },
+    "ownerDiscovery": {
+      "ownerName": "Sarah Wilson",
+      "title": "Founder / Managing Director",
+      "confidence": "PROBABLE",
+      "source": "State Corporate Registry",
+      "socialProfiles": {
+        "facebook": "https://facebook.com/blue ribbon.austin, tx",
+        "yelp": "https://yelp.com/biz/blue ribbon-plumbers-austin, tx"
+      }
+    },
+    "websiteAudit": {
+      "hasWebsite": true,
+      "hasSsl": false,
+      "isMobileResponsive": true,
+      "cmsDetected": "Custom HTML",
+      "staleCopyrightYear": 2024,
+      "issuesDetected": [
+        "Missing SSL certificate"
+      ]
+    },
+    "pipeline": {
+      "stage": "DISCOVERED",
+      "notes": [],
+      "callLogs": []
+    },
+    "createdAt": "2026-09-23T16:23:39.688Z",
+    "updatedAt": "2026-09-23T16:23:39.694Z",
+    "opportunityScore": 35,
+    "scoreBreakdown": [
+      {
+        "reason": "Website lacks SSL (Insecure HTTP)",
+        "points": 15
+      },
+      {
+        "reason": "Direct business phone available",
+        "points": 5
+      },
+      {
+        "reason": "Owner identified: Sarah Wilson (State Corporate Registry)",
+        "points": 15
+      }
+    ]
+  }
+]
