@@ -10,8 +10,11 @@ export interface UnifiedSearchParams {
   provider?: SearchProvider;
   apiKey?: string;
   projectId?: string;
-  filterNoWebsite?: boolean;
-  minScore?: number;
+  websiteFilter?: 'all' | 'no-website' | 'has-website';
+  hasPhoneOnly?: boolean;
+  hasEmailOnly?: boolean;
+  minReviews?: number;
+  minRating?: number;
   limit?: number;
 }
 
@@ -22,8 +25,11 @@ export async function executeUnifiedSearch(params: UnifiedSearchParams): Promise
     provider = 'mock',
     apiKey = '',
     projectId,
-    filterNoWebsite,
-    minScore,
+    websiteFilter = 'all',
+    hasPhoneOnly = false,
+    hasEmailOnly = false,
+    minReviews = 0,
+    minRating = 0,
     limit = 20,
   } = params;
 
@@ -67,12 +73,31 @@ export async function executeUnifiedSearch(params: UnifiedSearchParams): Promise
     return l;
   });
 
-  // Apply filters
-  if (filterNoWebsite) {
+  // 1. Logical Website Filter
+  if (websiteFilter === 'no-website') {
     leads = leads.filter((l) => !l.website);
+  } else if (websiteFilter === 'has-website') {
+    leads = leads.filter((l) => !!l.website);
   }
-  if (minScore && typeof minScore === 'number' && minScore > 0) {
-    leads = leads.filter((l) => l.opportunityScore >= minScore);
+
+  // 2. Logical Phone Requirement
+  if (hasPhoneOnly) {
+    leads = leads.filter((l) => !!l.phone && l.phone.trim() !== '');
+  }
+
+  // 3. Logical Email Requirement
+  if (hasEmailOnly) {
+    leads = leads.filter((l) => !!l.email && l.email.includes('@'));
+  }
+
+  // 4. Minimum Reviews (ensures active business, avoids ghost listings)
+  if (minReviews > 0) {
+    leads = leads.filter((l) => (l.reviewCount || 0) >= minReviews);
+  }
+
+  // 5. Minimum Rating
+  if (minRating > 0) {
+    leads = leads.filter((l) => (l.rating || 0) >= minRating);
   }
 
   return leads;

@@ -95,8 +95,11 @@ export default function Dashboard() {
     provider: any;
     apiKey: string;
     projectId?: string;
-    filterNoWebsite: boolean;
-    minScore: number;
+    websiteFilter: 'all' | 'no-website' | 'has-website';
+    hasPhoneOnly: boolean;
+    hasEmailOnly: boolean;
+    minReviews: number;
+    minRating: number;
     limit: number;
   }) => {
     try {

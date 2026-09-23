@@ -12,8 +12,11 @@ export async function POST(req: NextRequest) {
       provider = 'mock',
       apiKey,
       projectId,
-      filterNoWebsite,
-      minScore,
+      websiteFilter = 'all',
+      hasPhoneOnly = false,
+      hasEmailOnly = false,
+      minReviews = 0,
+      minRating = 0,
       limit = 20,
     } = body;
 
@@ -30,8 +33,11 @@ export async function POST(req: NextRequest) {
       provider: provider as SearchProvider,
       apiKey: apiKey ? apiKey.trim() : undefined,
       projectId,
-      filterNoWebsite: Boolean(filterNoWebsite),
-      minScore: minScore ? Number(minScore) : 0,
+      websiteFilter,
+      hasPhoneOnly: Boolean(hasPhoneOnly),
+      hasEmailOnly: Boolean(hasEmailOnly),
+      minReviews: minReviews ? Number(minReviews) : 0,
+      minRating: minRating ? Number(minRating) : 0,
       limit: limit ? Number(limit) : 20,
     });
 

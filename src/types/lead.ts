@@ -107,10 +107,11 @@ export interface SearchQuery {
   provider?: SearchProvider;
   apiKey?: string;
   projectId?: string;
-  filterNoWebsite?: boolean;
-  maxReviews?: number;
+  websiteFilter?: 'all' | 'no-website' | 'has-website';
+  hasPhoneOnly?: boolean;
+  hasEmailOnly?: boolean;
+  minReviews?: number;
   minRating?: number;
-  minScore?: number;
   limit?: number;
 }
 
