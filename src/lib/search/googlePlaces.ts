@@ -1,4 +1,4 @@
-import { Lead } from '@/types/lead';
+import { Lead, GoogleFilterOptions } from '@/types/lead';
 import { calculateOpportunityScore } from '../scoring';
 
 interface GooglePlacesNewResponse {
@@ -26,7 +26,9 @@ export async function searchGooglePlaces(
   query: string,
   apiKey: string,
   city: string,
-  niche: string
+  niche: string,
+  limit: number = 20,
+  options?: GoogleFilterOptions
 ): Promise<Lead[]> {
   const url = 'https://places.googleapis.com/v1/places:searchText';
 
@@ -43,10 +45,23 @@ export async function searchGooglePlaces(
     'places.reviews',
   ].join(',');
 
-  const body = {
-    textQuery: `${niche} in ${city}`,
-    pageSize: 20,
+  const body: Record<string, any> = {
+    textQuery: query || `${niche} in ${city}`,
+    pageSize: Math.min(20, Math.max(1, limit)),
   };
+
+  if (options?.languageCode) {
+    body.languageCode = options.languageCode;
+  }
+  if (options?.regionCode) {
+    body.regionCode = options.regionCode;
+  }
+  if (options?.minRating && options.minRating > 0) {
+    body.minRating = options.minRating;
+  }
+  if (options?.openNow !== undefined) {
+    body.openNow = options.openNow;
+  }
 
   const response = await fetch(url, {
     method: 'POST',

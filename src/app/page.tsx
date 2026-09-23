@@ -95,12 +95,15 @@ export default function Dashboard() {
     provider: any;
     apiKey: string;
     projectId?: string;
+    limit: number;
+    apifyOptions?: any;
+    outscraperOptions?: any;
+    googleOptions?: any;
     websiteFilter: 'all' | 'no-website' | 'has-website';
     hasPhoneOnly: boolean;
     hasEmailOnly: boolean;
     minReviews: number;
     minRating: number;
-    limit: number;
   }) => {
     try {
       setLoading(true);

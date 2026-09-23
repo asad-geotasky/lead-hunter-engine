@@ -1,4 +1,4 @@
-import { Lead } from '@/types/lead';
+import { Lead, ApifyFilterOptions } from '@/types/lead';
 import { calculateOpportunityScore } from '../scoring';
 
 interface ApifyPlaceItem {
@@ -37,7 +37,8 @@ export async function searchApify(
   city: string,
   niche: string,
   limit: number = 20,
-  projectId?: string
+  projectId?: string,
+  options?: ApifyFilterOptions
 ): Promise<Lead[]> {
   const token = apiKey || process.env.APIFY_API_TOKEN;
   if (!token) {
@@ -47,12 +48,20 @@ export async function searchApify(
   // Apify Compass Google Places Crawler sync endpoint
   const url = `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${token}`;
 
-  const body = {
+  const body: Record<string, any> = {
     searchStringsArray: [query || `${niche} in ${city}`],
+    locationQuery: city,
     maxCrawledPlacesPerSearch: limit,
-    scrapeWebsites: true, // Scrapes emails & social links from company websites
-    language: 'en',
+    language: options?.language || 'en',
+    scrapeWebsites: options?.extractEmails !== false, // Scrapes emails & social links from company websites
   };
+
+  if (options?.countryCode) {
+    body.countryCode = options.countryCode.toLowerCase();
+  }
+  if (options?.maxReviews !== undefined) {
+    body.maxReviews = options.maxReviews;
+  }
 
   const response = await fetch(url, {
     method: 'POST',
@@ -72,7 +81,7 @@ export async function searchApify(
     return [];
   }
 
-  return items.map((item) => {
+  let leads = items.map((item) => {
     const businessName = item.title || item.name || 'Local Business';
     const placeId = item.placeId || item.cid || `apify_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const extractedEmail = item.email || (item.emails && item.emails[0]) || item.contactEmail || null;
@@ -134,4 +143,16 @@ export async function searchApify(
 
     return rawLead as Lead;
   });
+
+  // Apply Apify specific post-filters
+  if (options?.hasPhoneOnly) {
+    leads = leads.filter((l) => !!l.phone && l.phone.trim() !== '');
+  }
+  if (options?.websiteFilter === 'no-website') {
+    leads = leads.filter((l) => !l.website);
+  } else if (options?.websiteFilter === 'has-website') {
+    leads = leads.filter((l) => !!l.website);
+  }
+
+  return leads;
 }

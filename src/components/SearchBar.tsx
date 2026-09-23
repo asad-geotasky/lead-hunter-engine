@@ -16,9 +16,20 @@ import {
   Mail,
   Star,
   CheckCircle2,
-  X
+  X,
+  Languages,
+  ShieldCheck,
+  Building2,
+  Clock,
+  RotateCcw
 } from 'lucide-react';
-import { SearchProvider, Project } from '@/types/lead';
+import { 
+  SearchProvider, 
+  Project, 
+  ApifyFilterOptions, 
+  OutscraperFilterOptions, 
+  GoogleFilterOptions 
+} from '@/types/lead';
 
 interface SearchBarProps {
   onSearch: (params: {
@@ -27,12 +38,15 @@ interface SearchBarProps {
     provider: SearchProvider;
     apiKey: string;
     projectId?: string;
+    limit: number;
+    apifyOptions?: ApifyFilterOptions;
+    outscraperOptions?: OutscraperFilterOptions;
+    googleOptions?: GoogleFilterOptions;
     websiteFilter: 'all' | 'no-website' | 'has-website';
     hasPhoneOnly: boolean;
     hasEmailOnly: boolean;
     minReviews: number;
     minRating: number;
-    limit: number;
   }) => Promise<void>;
   loading: boolean;
   projects: Project[];
@@ -58,13 +72,30 @@ export default function SearchBar({
   const [showFilters, setShowFilters] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
 
-  // Logical Filters
-  const [websiteFilter, setWebsiteFilter] = useState<'all' | 'no-website' | 'has-website'>('all');
-  const [hasPhoneOnly, setHasPhoneOnly] = useState(true); // By default, cold calling/SMS requires phone
-  const [hasEmailOnly, setHasEmailOnly] = useState(false);
-  const [minReviews, setMinReviews] = useState(0);
-  const [minRating, setMinRating] = useState(0);
+  // Common Filters
   const [limit, setLimit] = useState(25);
+  const [websiteFilter, setWebsiteFilter] = useState<'all' | 'no-website' | 'has-website'>('all');
+  const [hasPhoneOnly, setHasPhoneOnly] = useState(true);
+  const [hasEmailOnly, setHasEmailOnly] = useState(false);
+
+  // Apify Native Options
+  const [apifyCountry, setApifyCountry] = useState('us');
+  const [apifyLanguage, setApifyLanguage] = useState('en');
+  const [apifyExtractEmails, setApifyExtractEmails] = useState(true);
+  const [apifyMaxReviews, setApifyMaxReviews] = useState(3);
+
+  // Outscraper Native Options
+  const [outscraperRegion, setOutscraperRegion] = useState('US');
+  const [outscraperLanguage, setOutscraperLanguage] = useState('en');
+  const [outscraperDropDuplicates, setOutscraperDropDuplicates] = useState(true);
+  const [outscraperSkipEmptyEmail, setOutscraperSkipEmptyEmail] = useState(false);
+  const [outscraperSkipEmptyPhone, setOutscraperSkipEmptyPhone] = useState(true);
+
+  // Google Places Native Options
+  const [googleRegion, setGoogleRegion] = useState('US');
+  const [googleLanguage, setGoogleLanguage] = useState('en');
+  const [googleMinRating, setGoogleMinRating] = useState(0);
+  const [googleOpenNow, setGoogleOpenNow] = useState(false);
 
   // Load saved API key from localStorage when provider changes
   useEffect(() => {
@@ -84,28 +115,43 @@ export default function SearchBar({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche.trim() || !city.trim()) return;
+
     onSearch({
       niche: niche.trim(),
       city: city.trim(),
       provider,
       apiKey: apiKey.trim(),
       projectId: activeProjectId || undefined,
+      limit,
       websiteFilter,
       hasPhoneOnly,
       hasEmailOnly,
-      minReviews,
-      minRating,
-      limit,
+      minReviews: 0,
+      minRating: provider === 'google' ? googleMinRating : 0,
+      apifyOptions: {
+        countryCode: apifyCountry,
+        language: apifyLanguage,
+        extractEmails: apifyExtractEmails,
+        hasPhoneOnly,
+        websiteFilter,
+        maxReviews: apifyMaxReviews,
+      },
+      outscraperOptions: {
+        region: outscraperRegion,
+        language: outscraperLanguage,
+        dropDuplicates: outscraperDropDuplicates,
+        skipEmptyEmail: outscraperSkipEmptyEmail,
+        skipEmptyPhone: outscraperSkipEmptyPhone,
+        websiteFilter,
+      },
+      googleOptions: {
+        regionCode: googleRegion,
+        languageCode: googleLanguage,
+        minRating: googleMinRating,
+        openNow: googleOpenNow,
+      },
     });
   };
-
-  const activeFilterCount = 
-    (websiteFilter !== 'all' ? 1 : 0) +
-    (hasPhoneOnly ? 1 : 0) +
-    (hasEmailOnly ? 1 : 0) +
-    (minReviews > 0 ? 1 : 0) +
-    (minRating > 0 ? 1 : 0) +
-    (limit !== 25 ? 1 : 0);
 
   return (
     <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700/80 rounded-2xl p-5 shadow-2xl space-y-4">
@@ -115,7 +161,7 @@ export default function SearchBar({
         <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-700">
           <span className="text-slate-400 px-2 font-medium flex items-center gap-1">
             <Database className="w-3.5 h-3.5 text-blue-400" />
-            Source:
+            Source Engine:
           </span>
           <button
             type="button"
@@ -126,7 +172,7 @@ export default function SearchBar({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Apify (Emails + Maps)
+            Apify (Emails + GMaps)
           </button>
           <button
             type="button"
@@ -137,7 +183,7 @@ export default function SearchBar({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Outscraper API
+            Outscraper API v2
           </button>
           <button
             type="button"
@@ -163,9 +209,9 @@ export default function SearchBar({
           </button>
         </div>
 
-        {/* Target Project Selection & API Key Button */}
+        {/* Project Switcher & API Key Configuration */}
         <div className="flex items-center gap-2">
-          {/* API Key Configure Button */}
+          {/* API Key Modal Button */}
           <button
             type="button"
             onClick={() => setShowKeyModal(true)}
@@ -174,7 +220,7 @@ export default function SearchBar({
                 ? 'bg-slate-900/80 border-slate-700 text-slate-300 hover:text-white'
                 : 'bg-amber-500/10 border-amber-500/40 text-amber-300 animate-pulse'
             }`}
-            title="Configure Scraper API Key"
+            title="Configure Provider Credentials"
           >
             <Key className="w-3.5 h-3.5 text-amber-400" />
             <span>{apiKey ? 'API Key Set' : 'Set API Key'}</span>
@@ -204,7 +250,7 @@ export default function SearchBar({
             type="button"
             onClick={onOpenProjectModal}
             className="p-1.5 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-slate-200 transition"
-            title="Create or Manage Projects"
+            title="Manage Projects"
           >
             <FolderPlus className="w-4 h-4 text-blue-400" />
           </button>
@@ -229,7 +275,7 @@ export default function SearchBar({
             />
           </div>
 
-          {/* City Input */}
+          {/* City / Location Input */}
           <div className="md:col-span-4 relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <MapPin className="w-4 h-4" />
@@ -238,13 +284,13 @@ export default function SearchBar({
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="City (e.g. Austin, TX or New York, NY)"
+              placeholder="Target Location (e.g. Austin, TX or New York, NY)"
               className="w-full pl-10 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               required
             />
           </div>
 
-          {/* Search Button & Advanced Filters Trigger */}
+          {/* Action Trigger Buttons */}
           <div className="md:col-span-4 flex items-center gap-2">
             <button
               type="submit"
@@ -254,7 +300,7 @@ export default function SearchBar({
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Harvesting Leads...</span>
+                  <span>Harvesting {provider.toUpperCase()} Leads...</span>
                 </>
               ) : (
                 <>
@@ -264,97 +310,93 @@ export default function SearchBar({
               )}
             </button>
 
-            {/* Logical Advanced Filters Toggle */}
+            {/* Advanced Filters Button */}
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
               className={`p-3 rounded-xl border flex items-center gap-1.5 transition ${
-                showFilters || activeFilterCount > 0
+                showFilters
                   ? 'bg-blue-600/20 border-blue-500 text-blue-400 shadow-sm'
                   : 'bg-slate-900/90 border-slate-700 text-slate-400 hover:text-slate-200'
               }`}
-              title="Advanced Lead Filters"
+              title="Provider-Specific Advanced Filters"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              {activeFilterCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              )}
             </button>
           </div>
         </div>
 
-        {/* LOGICAL ADVANCED FILTERS PANEL */}
+        {/* PROVIDER-SPECIFIC ADVANCED FILTERS PANEL */}
         {showFilters && (
           <div className="pt-4 border-t border-slate-700/60 space-y-4 animate-in fade-in text-xs">
             <div className="flex items-center justify-between text-slate-400 font-medium">
-              <span className="flex items-center gap-1.5 text-slate-200 font-semibold">
+              <span className="flex items-center gap-2 text-slate-200 font-semibold">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
-                Advanced Lead Extraction Filters
+                <span>
+                  {provider === 'apify' && 'Apify Google Maps Scraper Native Filters'}
+                  {provider === 'outscraper' && 'Outscraper API v2 Native Filters'}
+                  {provider === 'google' && 'Google Places API (New) Parameters'}
+                  {provider === 'mock' && 'Sandbox Simulator Settings'}
+                </span>
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setWebsiteFilter('all');
-                  setHasPhoneOnly(false);
-                  setHasEmailOnly(false);
-                  setMinReviews(0);
-                  setMinRating(0);
-                  setLimit(25);
-                }}
-                className="text-slate-400 hover:text-white underline text-[11px]"
-              >
-                Reset Filters
-              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* 1. Website Presence Target */}
-              <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
-                <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
-                  Website Presence
-                </label>
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-                    <input
-                      type="radio"
-                      name="websiteFilter"
-                      checked={websiteFilter === 'all'}
-                      onChange={() => setWebsiteFilter('all')}
-                      className="text-blue-600 focus:ring-blue-500 bg-slate-900"
-                    />
-                    <span>All Businesses</span>
+            {/* CASE 1: APIFY NATIVE FILTERS */}
+            {provider === 'apify' && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Location & Language */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-blue-400" />
+                    Country & Language
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-                    <input
-                      type="radio"
-                      name="websiteFilter"
-                      checked={websiteFilter === 'no-website'}
-                      onChange={() => setWebsiteFilter('no-website')}
-                      className="text-blue-600 focus:ring-blue-500 bg-slate-900"
-                    />
-                    <span className="text-emerald-400 font-medium">No Website (Web Dev Targets)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-                    <input
-                      type="radio"
-                      name="websiteFilter"
-                      checked={websiteFilter === 'has-website'}
-                      onChange={() => setWebsiteFilter('has-website')}
-                      className="text-blue-600 focus:ring-blue-500 bg-slate-900"
-                    />
-                    <span>Has Website (Redesign/SEO)</span>
-                  </label>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Target Country:</span>
+                    <select
+                      value={apifyCountry}
+                      onChange={(e) => setApifyCountry(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none"
+                    >
+                      <option value="us">United States (US)</option>
+                      <option value="gb">United Kingdom (GB)</option>
+                      <option value="ca">Canada (CA)</option>
+                      <option value="au">Australia (AU)</option>
+                      <option value="de">Germany (DE)</option>
+                      <option value="fr">France (FR)</option>
+                      <option value="es">Spain (ES)</option>
+                      <option value="it">Italy (IT)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Result Language:</span>
+                    <select
+                      value={apifyLanguage}
+                      onChange={(e) => setApifyLanguage(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none"
+                    >
+                      <option value="en">English (en)</option>
+                      <option value="es">Spanish (es)</option>
+                      <option value="fr">French (fr)</option>
+                      <option value="de">German (de)</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              {/* 2. Contact Requirements */}
-              <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
-                <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-indigo-400" />
-                  Contact Requirements
-                </label>
-                <div className="space-y-2 pt-0.5">
+                {/* Website Crawling & Email Discovery */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-purple-400" />
+                    Email & Social Extraction
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={apifyExtractEmails}
+                      onChange={(e) => setApifyExtractEmails(e.target.checked)}
+                      className="rounded border-slate-700 text-purple-600 focus:ring-purple-500 bg-slate-900"
+                    />
+                    <span>Crawl Website for <strong>Emails & Socials</strong></span>
+                  </label>
                   <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
                     <input
                       type="checkbox"
@@ -364,81 +406,390 @@ export default function SearchBar({
                     />
                     <span>Must have <strong>Phone Number</strong></span>
                   </label>
+                  <p className="text-[10px] text-slate-400 leading-snug">
+                    Apify automatically visits the business website to scrape owner contacts.
+                  </p>
+                </div>
+
+                {/* Website Presence Filter */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                    Website Presence
+                  </label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                      <input
+                        type="radio"
+                        name="apifyWebsite"
+                        checked={websiteFilter === 'all'}
+                        onChange={() => setWebsiteFilter('all')}
+                        className="text-blue-600 focus:ring-blue-500 bg-slate-900"
+                      />
+                      <span>All Businesses</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                      <input
+                        type="radio"
+                        name="apifyWebsite"
+                        checked={websiteFilter === 'no-website'}
+                        onChange={() => setWebsiteFilter('no-website')}
+                        className="text-blue-600 focus:ring-blue-500 bg-slate-900"
+                      />
+                      <span className="text-emerald-400 font-medium">No Website (Web Dev Pitch)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                      <input
+                        type="radio"
+                        name="apifyWebsite"
+                        checked={websiteFilter === 'has-website'}
+                        onChange={() => setWebsiteFilter('has-website')}
+                        className="text-blue-600 focus:ring-blue-500 bg-slate-900"
+                      />
+                      <span>Has Website (Redesign/SEO)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Batch Limit & Reviews */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold">
+                    Extraction Limit & Reviews
+                  </label>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Max Reviews to Scrape:</span>
+                    <select
+                      value={apifyMaxReviews}
+                      onChange={(e) => setApifyMaxReviews(parseInt(e.target.value, 10))}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none"
+                    >
+                      <option value={0}>0 (Fastest speed)</option>
+                      <option value={3}>3 Recent Reviews</option>
+                      <option value={5}>5 Reviews (Sentiment)</option>
+                      <option value={10}>10 Reviews</option>
+                    </select>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Batch Size:</span>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[10, 25, 50, 100].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setLimit(num)}
+                          className={`py-1.5 rounded-lg font-bold text-center transition ${
+                            limit === num
+                              ? 'bg-blue-600 text-white shadow'
+                              : 'bg-slate-800 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CASE 2: OUTSCRAPER NATIVE FILTERS */}
+            {provider === 'outscraper' && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Region & Language */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-purple-400" />
+                    Region & Language
+                  </label>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Region Code:</span>
+                    <select
+                      value={outscraperRegion}
+                      onChange={(e) => setOutscraperRegion(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    >
+                      <option value="US">United States (US)</option>
+                      <option value="GB">United Kingdom (GB)</option>
+                      <option value="CA">Canada (CA)</option>
+                      <option value="AU">Australia (AU)</option>
+                      <option value="DE">Germany (DE)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Language:</span>
+                    <select
+                      value={outscraperLanguage}
+                      onChange={(e) => setOutscraperLanguage(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    >
+                      <option value="en">English (en)</option>
+                      <option value="es">Spanish (es)</option>
+                      <option value="de">German (de)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Deduplication & Contact Quality */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Outscraper Deduplication
+                  </label>
                   <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
                     <input
                       type="checkbox"
-                      checked={hasEmailOnly}
-                      onChange={(e) => setHasEmailOnly(e.target.checked)}
+                      checked={outscraperDropDuplicates}
+                      onChange={(e) => setOutscraperDropDuplicates(e.target.checked)}
+                      className="rounded border-slate-700 text-blue-600 focus:ring-blue-500 bg-slate-900"
+                    />
+                    <span>Drop Duplicate Places</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={outscraperSkipEmptyPhone}
+                      onChange={(e) => setOutscraperSkipEmptyPhone(e.target.checked)}
+                      className="rounded border-slate-700 text-blue-600 focus:ring-blue-500 bg-slate-900"
+                    />
+                    <span>Skip Empty Phone Numbers</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={outscraperSkipEmptyEmail}
+                      onChange={(e) => setOutscraperSkipEmptyEmail(e.target.checked)}
                       className="rounded border-slate-700 text-purple-600 focus:ring-purple-500 bg-slate-900"
                     />
-                    <span>Must have <strong>Scraped Email</strong></span>
+                    <span>Only Verified Emails</span>
                   </label>
                 </div>
-              </div>
 
-              {/* 3. Business Activity & Reviews */}
-              <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
-                <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 text-amber-400" />
-                  Activity & Reviews
-                </label>
-                <div className="space-y-2">
+                {/* Website Presence */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
+                  <label className="block text-slate-300 font-semibold">
+                    Website Filter
+                  </label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="radio"
+                        name="outscraperWeb"
+                        checked={websiteFilter === 'all'}
+                        onChange={() => setWebsiteFilter('all')}
+                        className="text-blue-600 bg-slate-900"
+                      />
+                      <span>All Places</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="radio"
+                        name="outscraperWeb"
+                        checked={websiteFilter === 'no-website'}
+                        onChange={() => setWebsiteFilter('no-website')}
+                        className="text-blue-600 bg-slate-900"
+                      />
+                      <span className="text-emerald-400 font-medium">Without Website Only</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Batch Limit */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold">
+                    Limit Batch Volume
+                  </label>
+                  <div className="grid grid-cols-4 gap-1 pt-1">
+                    {[10, 25, 50, 100].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setLimit(num)}
+                        className={`py-2 rounded-lg font-bold text-center transition ${
+                          limit === num
+                            ? 'bg-purple-600 text-white shadow'
+                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CASE 3: GOOGLE PLACES NATIVE PARAMETERS */}
+            {provider === 'google' && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Region & Language */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-amber-400" />
+                    Region & Language
+                  </label>
                   <div>
-                    <span className="text-[11px] text-slate-400 block mb-1">Minimum Reviews:</span>
+                    <span className="text-[11px] text-slate-400 block mb-1">Region Code:</span>
                     <select
-                      value={minReviews}
-                      onChange={(e) => setMinReviews(parseInt(e.target.value, 10))}
-                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none"
+                      value={googleRegion}
+                      onChange={(e) => setGoogleRegion(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white"
                     >
-                      <option value={0}>Any Review Count</option>
-                      <option value={5}>5+ Reviews (Active)</option>
-                      <option value={20}>20+ Reviews (Established)</option>
-                      <option value={50}>50+ Reviews (High Volume)</option>
+                      <option value="US">US - United States</option>
+                      <option value="GB">GB - United Kingdom</option>
+                      <option value="CA">CA - Canada</option>
+                      <option value="AU">AU - Australia</option>
                     </select>
                   </div>
-
                   <div>
-                    <span className="text-[11px] text-slate-400 block mb-1">Rating Filter:</span>
+                    <span className="text-[11px] text-slate-400 block mb-1">Language:</span>
                     <select
-                      value={minRating}
-                      onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none"
+                      value={googleLanguage}
+                      onChange={(e) => setGoogleLanguage(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white"
                     >
-                      <option value={0}>Any Rating</option>
+                      <option value="en">English (en)</option>
+                      <option value="es">Spanish (es)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Operating Status & Rating */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-amber-400" />
+                    Rating & Hours
+                  </label>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Minimum Rating:</span>
+                    <select
+                      value={googleMinRating}
+                      onChange={(e) => setGoogleMinRating(parseFloat(e.target.value))}
+                      className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    >
+                      <option value={0}>Any Rating (0+)</option>
                       <option value={3.5}>3.5★ and above</option>
                       <option value={4.0}>4.0★ and above</option>
                       <option value={4.5}>4.5★ and above</option>
                     </select>
                   </div>
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white pt-1">
+                    <input
+                      type="checkbox"
+                      checked={googleOpenNow}
+                      onChange={(e) => setGoogleOpenNow(e.target.checked)}
+                      className="rounded border-slate-700 text-amber-600 bg-slate-900"
+                    />
+                    <span>Open Now Only</span>
+                  </label>
                 </div>
-              </div>
 
-              {/* 4. Batch Extraction Volume */}
-              <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
-                <label className="block text-slate-300 font-semibold">
-                  Batch Extraction Limit
-                </label>
-                <p className="text-[11px] text-slate-400">
-                  Select how many prospects to harvest in this batch:
-                </p>
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  {[10, 25, 50, 100].map((num) => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => setLimit(num)}
-                      className={`py-2 rounded-lg font-bold transition text-center ${
-                        limit === num
-                          ? 'bg-blue-600 text-white shadow'
-                          : 'bg-slate-800 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  ))}
+                {/* Website Presence */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
+                  <label className="block text-slate-300 font-semibold">
+                    Website Filter
+                  </label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="radio"
+                        name="googleWeb"
+                        checked={websiteFilter === 'all'}
+                        onChange={() => setWebsiteFilter('all')}
+                        className="text-blue-600 bg-slate-900"
+                      />
+                      <span>All Places</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="radio"
+                        name="googleWeb"
+                        checked={websiteFilter === 'no-website'}
+                        onChange={() => setWebsiteFilter('no-website')}
+                        className="text-blue-600 bg-slate-900"
+                      />
+                      <span className="text-emerald-400 font-medium">Without Website Only</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Page Size */}
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+                  <label className="block text-slate-300 font-semibold">
+                    Page Size (Google API)
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    Google Places API New allows up to 20 places per request:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {[10, 20].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setLimit(num)}
+                        className={`py-2 rounded-lg font-bold text-center transition ${
+                          limit === num
+                            ? 'bg-amber-600 text-white shadow'
+                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {num} Places
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* CASE 4: SANDBOX SIMULATOR */}
+            {provider === 'mock' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
+                  <label className="block text-slate-300 font-semibold">Website Simulation</label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="radio"
+                        name="mockWeb"
+                        checked={websiteFilter === 'all'}
+                        onChange={() => setWebsiteFilter('all')}
+                        className="text-emerald-600 bg-slate-900"
+                      />
+                      <span>Mixed (With & Without Web)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="radio"
+                        name="mockWeb"
+                        checked={websiteFilter === 'no-website'}
+                        onChange={() => setWebsiteFilter('no-website')}
+                        className="text-emerald-600 bg-slate-900"
+                      />
+                      <span className="text-emerald-400 font-medium">100% Without Website</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-700/80 space-y-2">
+                  <label className="block text-slate-300 font-semibold">Batch Volume</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[10, 25, 50].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setLimit(num)}
+                        className={`py-2 rounded-lg font-bold text-center transition ${
+                          limit === num
+                            ? 'bg-emerald-600 text-white shadow'
+                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </form>

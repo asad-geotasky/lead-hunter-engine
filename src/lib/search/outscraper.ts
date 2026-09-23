@@ -1,4 +1,4 @@
-import { Lead } from '@/types/lead';
+import { Lead, OutscraperFilterOptions } from '@/types/lead';
 import { calculateOpportunityScore } from '../scoring';
 
 interface OutscraperPlaceItem {
@@ -32,7 +32,8 @@ export async function searchOutscraper(
   city: string,
   niche: string,
   limit: number = 20,
-  projectId?: string
+  projectId?: string,
+  options?: OutscraperFilterOptions
 ): Promise<Lead[]> {
   const token = apiKey || process.env.OUTSCRAPER_API_KEY;
   if (!token) {
@@ -40,9 +41,19 @@ export async function searchOutscraper(
   }
 
   const searchQuery = query || `${niche} in ${city}`;
-  const url = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(
+  let url = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(
     searchQuery
   )}&limit=${limit}&async=false&enrichment=contacts`;
+
+  if (options?.language) {
+    url += `&language=${encodeURIComponent(options.language)}`;
+  }
+  if (options?.region) {
+    url += `&region=${encodeURIComponent(options.region)}`;
+  }
+  if (options?.dropDuplicates !== false) {
+    url += `&dropDuplicates=true`;
+  }
 
   const response = await fetch(url, {
     method: 'GET',
@@ -58,14 +69,13 @@ export async function searchOutscraper(
   }
 
   const result = await response.json();
-  // Outscraper usually wraps results in data array of arrays: { data: [[...items]] }
   const rawItems: OutscraperPlaceItem[] = Array.isArray(result.data)
     ? Array.isArray(result.data[0])
       ? result.data[0]
       : result.data
     : [];
 
-  return rawItems.map((item) => {
+  let leads = rawItems.map((item) => {
     const businessName = item.name || 'Local Business';
     const placeId = item.place_id || `outscraper_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const extractedEmail =
@@ -129,4 +139,19 @@ export async function searchOutscraper(
 
     return rawLead as Lead;
   });
+
+  // Outscraper-specific post filters
+  if (options?.skipEmptyEmail) {
+    leads = leads.filter((l) => !!l.email && l.email.includes('@'));
+  }
+  if (options?.skipEmptyPhone) {
+    leads = leads.filter((l) => !!l.phone && l.phone.trim() !== '');
+  }
+  if (options?.websiteFilter === 'no-website') {
+    leads = leads.filter((l) => !l.website);
+  } else if (options?.websiteFilter === 'has-website') {
+    leads = leads.filter((l) => !!l.website);
+  }
+
+  return leads;
 }

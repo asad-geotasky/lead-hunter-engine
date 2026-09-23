@@ -12,12 +12,15 @@ export async function POST(req: NextRequest) {
       provider = 'mock',
       apiKey,
       projectId,
+      limit = 20,
+      apifyOptions,
+      outscraperOptions,
+      googleOptions,
       websiteFilter = 'all',
       hasPhoneOnly = false,
       hasEmailOnly = false,
       minReviews = 0,
       minRating = 0,
-      limit = 20,
     } = body;
 
     if (!niche || !city) {
@@ -33,12 +36,15 @@ export async function POST(req: NextRequest) {
       provider: provider as SearchProvider,
       apiKey: apiKey ? apiKey.trim() : undefined,
       projectId,
+      limit: limit ? Number(limit) : 20,
+      apifyOptions,
+      outscraperOptions,
+      googleOptions,
       websiteFilter,
       hasPhoneOnly: Boolean(hasPhoneOnly),
       hasEmailOnly: Boolean(hasEmailOnly),
       minReviews: minReviews ? Number(minReviews) : 0,
       minRating: minRating ? Number(minRating) : 0,
-      limit: limit ? Number(limit) : 20,
     });
 
     const stats = await upsertLeads(leads);

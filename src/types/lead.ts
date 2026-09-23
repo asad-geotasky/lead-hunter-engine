@@ -101,18 +101,46 @@ export interface Lead {
 
 export type SearchProvider = 'apify' | 'outscraper' | 'google' | 'mock';
 
+export interface ApifyFilterOptions {
+  countryCode?: string;
+  language?: string;
+  extractEmails?: boolean;
+  hasPhoneOnly?: boolean;
+  websiteFilter?: 'all' | 'no-website' | 'has-website';
+  maxReviews?: number;
+}
+
+export interface OutscraperFilterOptions {
+  region?: string;
+  language?: string;
+  dropDuplicates?: boolean;
+  skipEmptyEmail?: boolean;
+  skipEmptyPhone?: boolean;
+  websiteFilter?: 'all' | 'no-website' | 'has-website';
+}
+
+export interface GoogleFilterOptions {
+  regionCode?: string;
+  languageCode?: string;
+  minRating?: number;
+  openNow?: boolean;
+}
+
 export interface SearchQuery {
   niche: string;
   city: string;
   provider?: SearchProvider;
   apiKey?: string;
   projectId?: string;
+  limit?: number;
+  apifyOptions?: ApifyFilterOptions;
+  outscraperOptions?: OutscraperFilterOptions;
+  googleOptions?: GoogleFilterOptions;
   websiteFilter?: 'all' | 'no-website' | 'has-website';
   hasPhoneOnly?: boolean;
   hasEmailOnly?: boolean;
   minReviews?: number;
   minRating?: number;
-  limit?: number;
 }
 
 export interface Project {
