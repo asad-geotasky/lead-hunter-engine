@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Lead, PipelineStage, Project } from '@/types/lead';
 import SearchBar from '@/components/SearchBar';
 import LeadCard from '@/components/LeadCard';
+import LeadListView from '@/components/LeadListView';
 import PipelineBoard from '@/components/PipelineBoard';
+import SettingsView from '@/components/SettingsView';
+import Sidebar from '@/components/Sidebar';
 import LeadDetailModal from '@/components/LeadDetailModal';
 import ExportModal from '@/components/ExportModal';
 import SyncModal from '@/components/SyncModal';
@@ -16,6 +19,7 @@ import { SystemSmtpModal } from '@/components/SystemSmtpModal';
 import { 
   Target, 
   LayoutGrid, 
+  List,
   Kanban, 
   Download, 
   Sparkles, 
@@ -31,16 +35,20 @@ import {
   Layers,
   Server,
   LogOut,
-  Shield
+  Shield,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function Dashboard() {
   const router = useRouter();
+  const [currentTab, setCurrentTab] = useState<'leads' | 'settings'>('leads');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'pipeline'>('grid');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'pipeline'>('grid');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string; role: string } | null>(null);
   
@@ -120,6 +128,13 @@ export default function Dashboard() {
     fetchLeads();
     fetchProjects();
     fetchCurrentUser();
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'settings') {
+        setCurrentTab('settings');
+      }
+    }
   }, [activeProjectId]);
 
   // Run Search
@@ -267,150 +282,192 @@ export default function Dashboard() {
   const currentProjectName = projects.find((p) => p.id === activeProjectId)?.name || 'All Leads';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Navigation */}
-      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-              <Target className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                LeadHunter Engine
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                  v3.0 ENTERPRISE
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                <span>Active Workspace:</span>
-                <strong className="text-blue-400">{currentProjectName}</strong>
-              </p>
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
+      {/* Desktop Left Sidebar */}
+      <div className="hidden lg:flex shrink-0">
+        <Sidebar
+          currentTab={currentTab}
+          onSelectTab={setCurrentTab}
+          projects={projects}
+          activeProjectId={activeProjectId}
+          onOpenProjects={() => setShowProjectModal(true)}
+          onOpenMailboxes={() => setShowMailboxModal(true)}
+          onOpenCampaigns={() => setShowCampaignModal(true)}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          leadCount={leads.length}
+        />
+      </div>
+
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden bg-black/80 backdrop-blur-sm">
+          <div className="relative w-64 h-full bg-slate-950 flex flex-col">
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute top-4 right-3 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              title="Close Menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <Sidebar
+              currentTab={currentTab}
+              onSelectTab={(tab) => {
+                setCurrentTab(tab);
+                setMobileMenuOpen(false);
+              }}
+              projects={projects}
+              activeProjectId={activeProjectId}
+              onOpenProjects={() => {
+                setShowProjectModal(true);
+                setMobileMenuOpen(false);
+              }}
+              onOpenMailboxes={() => {
+                setShowMailboxModal(true);
+                setMobileMenuOpen(false);
+              }}
+              onOpenCampaigns={() => {
+                setShowCampaignModal(true);
+                setMobileMenuOpen(false);
+              }}
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              leadCount={leads.length}
+            />
           </div>
-
-          <div className="flex items-center gap-2.5">
-            {/* Project Manager Button */}
-            <button
-              onClick={() => setShowProjectModal(true)}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
-              title="Projects & Lead Folders"
-            >
-              <Folder className="w-3.5 h-3.5 text-blue-400" />
-              <span>Projects</span>
-            </button>
-
-            {/* Mailboxes Button */}
-            <button
-              onClick={() => setShowMailboxModal(true)}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
-              title="Multi-Mailbox Gmail Rotation"
-            >
-              <Mail className="w-3.5 h-3.5 text-purple-400" />
-              <span>Mailboxes</span>
-            </button>
-
-            {/* Campaign Automation Button */}
-            <button
-              onClick={() => setShowCampaignModal(true)}
-              className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm"
-              title="Cold Email Sequences & Automation"
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-400" />
-              <span>Campaigns</span>
-            </button>
-
-            {/* View Switcher */}
-            <div className="hidden sm:flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-xl text-xs">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-600 text-white font-semibold shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Grid</span>
-              </button>
-              <button
-                onClick={() => setViewMode('pipeline')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
-                  viewMode === 'pipeline'
-                    ? 'bg-blue-600 text-white font-semibold shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Kanban className="w-3.5 h-3.5" />
-                <span>Pipeline</span>
-              </button>
-            </div>
-
-            {/* Refresh */}
-            <button
-              onClick={fetchLeads}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition"
-              title="Refresh Leads"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-
-            {/* Export */}
-            <button
-              onClick={() => setShowExport(true)}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
-            >
-              <Download className="w-3.5 h-3.5 text-blue-400" />
-              <span>Export</span>
-            </button>
-
-            {/* Sync */}
-            <button
-              onClick={() => setShowSync(true)}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-md transition"
-              title="Push filtered leads to external webhook or CRM"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Sync</span>
-            </button>
-
-            {/* System SMTP Configuration */}
-            <button
-              onClick={() => setShowSystemSmtpModal(true)}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
-              title="Configure System SMTP for Registration and Reset Mails"
-            >
-              <Server className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">System SMTP</span>
-            </button>
-
-            {/* User Profile & Logout */}
-            {currentUser && (
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-                <div className="hidden md:flex flex-col items-end">
-                  <span className="text-xs font-semibold text-white leading-tight">{currentUser.name}</span>
-                  <span className="text-[10px] text-cyan-400 font-mono flex items-center gap-1">
-                    <Shield className="w-2.5 h-2.5" />
-                    {currentUser.role}
-                  </span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition"
-                  title="Sign Out"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
+          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
         </div>
-      </header>
+      )}
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
-        {/* Metric Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+      {/* Right Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden min-h-screen">
+        {/* Top Header */}
+        <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Mobile Menu Toggle Button */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition shrink-0"
+                title="Open Sidebar"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="min-w-0">
+                <div className="text-base font-bold text-white tracking-tight flex items-center gap-2 truncate">
+                  <span>{currentTab === 'settings' ? 'System & Account Settings' : 'Prospecting & Leads'}</span>
+                  {currentTab === 'leads' && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono truncate">
+                      {currentProjectName}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400 truncate hidden sm:block">
+                  {currentTab === 'settings'
+                    ? 'Security credentials, password update, and transactional SMTP'
+                    : 'Real-time multi-source B2B scraping, scoring & outreach'}
+                </p>
+              </div>
+            </div>
+
+            {/* Header Right Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              {currentTab === 'leads' ? (
+                <>
+                  {/* View Switcher: Cards | List | Pipeline */}
+                  <div className="flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-xl text-xs">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                        viewMode === 'grid'
+                          ? 'bg-cyan-600 text-white font-semibold shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Card Grid View"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Cards</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                        viewMode === 'list'
+                          ? 'bg-cyan-600 text-white font-semibold shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Table List View"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">List</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('pipeline')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                        viewMode === 'pipeline'
+                          ? 'bg-cyan-600 text-white font-semibold shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Kanban Pipeline Board"
+                    >
+                      <Kanban className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Pipeline</span>
+                    </button>
+                  </div>
+
+                  {/* Refresh */}
+                  <button
+                    onClick={fetchLeads}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition"
+                    title="Refresh Leads"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  </button>
+
+                  {/* Export */}
+                  <button
+                    onClick={() => setShowExport(true)}
+                    className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
+                    title="Export Leads"
+                  >
+                    <Download className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="hidden sm:inline">Export</span>
+                  </button>
+
+                  {/* Sync */}
+                  <button
+                    onClick={() => setShowSync(true)}
+                    className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-md transition"
+                    title="Push filtered leads to external webhook or CRM"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Sync</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setCurrentTab('leads')}
+                  className="flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Back to Leads</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
+          {currentTab === 'settings' ? (
+            <SettingsView
+              currentUser={currentUser}
+              onUserUpdated={(u) => setCurrentUser(u)}
+            />
+          ) : (
+            <>
+              {/* Metric Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
               <Zap className="w-5 h-5" />
@@ -556,8 +613,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* View Mode Switching */}
-        {viewMode === 'grid' ? (
+        {/* View Mode Switching: Cards | List | Pipeline */}
+        {viewMode === 'grid' && (
           <div>
             {filteredLeads.length === 0 ? (
               <div className="text-center py-16 bg-slate-900/40 border border-slate-800 rounded-2xl p-8">
@@ -583,14 +640,31 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        ) : (
+        )}
+
+        {viewMode === 'list' && (
+          <LeadListView
+            leads={filteredLeads}
+            onSelect={setSelectedLead}
+            onEnrich={handleEnrich}
+            onGenerateOutreach={handleGenerateOutreach}
+            onUpdateStage={handleUpdateStage}
+            enrichingId={enrichingId}
+            generatingId={generatingId}
+          />
+        )}
+
+        {viewMode === 'pipeline' && (
           <PipelineBoard
             leads={filteredLeads}
             onSelectLead={setSelectedLead}
             onUpdateStage={handleUpdateStage}
           />
         )}
-      </main>
+      </>
+    )}
+  </main>
+</div>
 
       {/* Modals */}
       {selectedLead && (
