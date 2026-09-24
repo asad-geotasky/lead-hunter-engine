@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Lead, PipelineStage, Project } from '@/types/lead';
 import SearchBar from '@/components/SearchBar';
 import LeadCard from '@/components/LeadCard';
@@ -11,6 +12,7 @@ import SyncModal from '@/components/SyncModal';
 import ProjectManagerModal from '@/components/ProjectManagerModal';
 import MailboxSettingsModal from '@/components/MailboxSettingsModal';
 import CampaignModal from '@/components/CampaignModal';
+import { SystemSmtpModal } from '@/components/SystemSmtpModal';
 import { 
   Target, 
   LayoutGrid, 
@@ -26,16 +28,21 @@ import {
   Folder,
   Mail,
   Flame,
-  Layers
+  Layers,
+  Server,
+  LogOut,
+  Shield
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'pipeline'>('grid');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string; role: string } | null>(null);
   
   // Modals
   const [showExport, setShowExport] = useState(false);
@@ -43,6 +50,7 @@ export default function Dashboard() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showMailboxModal, setShowMailboxModal] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showSystemSmtpModal, setShowSystemSmtpModal] = useState(false);
 
   // Filters
   const [filterType, setFilterType] = useState<'all' | 'no-website' | 'high-score' | 'mobile' | 'has-email'>('all');
@@ -83,9 +91,35 @@ export default function Dashboard() {
     }
   };
 
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated) {
+          setCurrentUser(data.user);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user session:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout error:', err);
+      router.push('/login');
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
     fetchProjects();
+    fetchCurrentUser();
   }, [activeProjectId]);
 
   // Run Search
@@ -339,6 +373,36 @@ export default function Dashboard() {
               <Send className="w-3.5 h-3.5" />
               <span>Sync</span>
             </button>
+
+            {/* System SMTP Configuration */}
+            <button
+              onClick={() => setShowSystemSmtpModal(true)}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
+              title="Configure System SMTP for Registration and Reset Mails"
+            >
+              <Server className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">System SMTP</span>
+            </button>
+
+            {/* User Profile & Logout */}
+            {currentUser && (
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+                <div className="hidden md:flex flex-col items-end">
+                  <span className="text-xs font-semibold text-white leading-tight">{currentUser.name}</span>
+                  <span className="text-[10px] text-cyan-400 font-mono flex items-center gap-1">
+                    <Shield className="w-2.5 h-2.5" />
+                    {currentUser.role}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -577,6 +641,11 @@ export default function Dashboard() {
           setShowCampaignModal(false);
           setShowMailboxModal(true);
         }}
+      />
+
+      <SystemSmtpModal
+        isOpen={showSystemSmtpModal}
+        onClose={() => setShowSystemSmtpModal(false)}
       />
     </div>
   );

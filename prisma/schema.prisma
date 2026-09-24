@@ -137,3 +137,28 @@ model EmailLog {
   @@index([campaignId])
   @@index([leadId])
 }
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String
+  passwordHash       String
+  role               String    @default("USER") // ADMIN | USER
+  isVerified         Boolean   @default(false)
+  verificationToken  String?
+  resetToken         String?
+  resetTokenExpiry   DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model SystemSetting {
+  id         String   @id @default("system_config")
+  smtpHost   String   @default("")
+  smtpPort   Int      @default(587)
+  smtpSecure Boolean  @default(false)
+  smtpUser   String   @default("")
+  smtpPass   String   @default("")
+  smtpFrom   String   @default("")
+  updatedAt  DateTime @updatedAt
+}
