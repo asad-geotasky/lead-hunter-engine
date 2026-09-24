@@ -7,15 +7,10 @@ import SearchBar from '@/components/SearchBar';
 import LeadCard from '@/components/LeadCard';
 import LeadListView from '@/components/LeadListView';
 import PipelineBoard from '@/components/PipelineBoard';
-import SettingsView from '@/components/SettingsView';
-import Sidebar from '@/components/Sidebar';
+import DashboardLayout from '@/components/DashboardLayout';
 import LeadDetailModal from '@/components/LeadDetailModal';
 import ExportModal from '@/components/ExportModal';
 import SyncModal from '@/components/SyncModal';
-import ProjectManagerModal from '@/components/ProjectManagerModal';
-import MailboxSettingsModal from '@/components/MailboxSettingsModal';
-import CampaignModal from '@/components/CampaignModal';
-import { SystemSmtpModal } from '@/components/SystemSmtpModal';
 import { 
   Target, 
   LayoutGrid, 
@@ -29,36 +24,21 @@ import {
   Search, 
   RefreshCw, 
   Send,
-  Folder,
-  Mail,
-  Flame,
-  Layers,
-  Server,
-  LogOut,
-  Shield,
-  Menu,
-  X
+  Mail
 } from 'lucide-react';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [currentTab, setCurrentTab] = useState<'leads' | 'settings'>('leads');
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'pipeline'>('grid');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string; role: string } | null>(null);
   
-  // Modals
+  // Modals for lead actions
   const [showExport, setShowExport] = useState(false);
   const [showSync, setShowSync] = useState(false);
-  const [showProjectModal, setShowProjectModal] = useState(false);
-  const [showMailboxModal, setShowMailboxModal] = useState(false);
-  const [showCampaignModal, setShowCampaignModal] = useState(false);
-  const [showSystemSmtpModal, setShowSystemSmtpModal] = useState(false);
 
   // Filters
   const [filterType, setFilterType] = useState<'all' | 'no-website' | 'high-score' | 'mobile' | 'has-email'>('all');
@@ -99,43 +79,32 @@ export default function Dashboard() {
     }
   };
 
-  const fetchCurrentUser = async () => {
-    try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated) {
-          setCurrentUser(data.user);
-        }
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lead_hunter_active_project');
+      if (saved) setActiveProjectId(saved);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'settings') {
+        router.push('/settings');
       }
-    } catch (err) {
-      console.error('Failed to fetch user session:', err);
     }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
-    } catch (err) {
-      console.error('Logout error:', err);
-      router.push('/login');
-    }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchLeads();
     fetchProjects();
-    fetchCurrentUser();
+  }, [activeProjectId]);
 
+  const handleSelectProject = (projectId: string | null) => {
+    setActiveProjectId(projectId);
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('tab') === 'settings') {
-        setCurrentTab('settings');
+      if (projectId) {
+        localStorage.setItem('lead_hunter_active_project', projectId);
+      } else {
+        localStorage.removeItem('lead_hunter_active_project');
       }
     }
-  }, [activeProjectId]);
+  };
 
   // Run Search
   const handleSearch = async (params: {
@@ -282,192 +251,102 @@ export default function Dashboard() {
   const currentProjectName = projects.find((p) => p.id === activeProjectId)?.name || 'All Leads';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
-      {/* Desktop Left Sidebar */}
-      <div className="hidden lg:flex shrink-0">
-        <Sidebar
-          currentTab={currentTab}
-          onSelectTab={setCurrentTab}
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onOpenProjects={() => setShowProjectModal(true)}
-          onOpenMailboxes={() => setShowMailboxModal(true)}
-          onOpenCampaigns={() => setShowCampaignModal(true)}
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          leadCount={leads.length}
-        />
-      </div>
-
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden bg-black/80 backdrop-blur-sm">
-          <div className="relative w-64 h-full bg-slate-950 flex flex-col">
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-4 right-3 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
-              title="Close Menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <Sidebar
-              currentTab={currentTab}
-              onSelectTab={(tab) => {
-                setCurrentTab(tab);
-                setMobileMenuOpen(false);
-              }}
-              projects={projects}
-              activeProjectId={activeProjectId}
-              onOpenProjects={() => {
-                setShowProjectModal(true);
-                setMobileMenuOpen(false);
-              }}
-              onOpenMailboxes={() => {
-                setShowMailboxModal(true);
-                setMobileMenuOpen(false);
-              }}
-              onOpenCampaigns={() => {
-                setShowCampaignModal(true);
-                setMobileMenuOpen(false);
-              }}
-              currentUser={currentUser}
-              onLogout={handleLogout}
-              leadCount={leads.length}
-            />
-          </div>
-          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
-        </div>
-      )}
-
-      {/* Right Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden min-h-screen">
-        {/* Top Header */}
-        <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              {/* Mobile Menu Toggle Button */}
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition shrink-0"
-                title="Open Sidebar"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-
-              <div className="min-w-0">
-                <div className="text-base font-bold text-white tracking-tight flex items-center gap-2 truncate">
-                  <span>{currentTab === 'settings' ? 'System & Account Settings' : 'Prospecting & Leads'}</span>
-                  {currentTab === 'leads' && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono truncate">
-                      {currentProjectName}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-slate-400 truncate hidden sm:block">
-                  {currentTab === 'settings'
-                    ? 'Security credentials, password update, and transactional SMTP'
-                    : 'Real-time multi-source B2B scraping, scoring & outreach'}
-                </p>
+    <DashboardLayout activeProjectId={activeProjectId} leadCount={leads.length}>
+      {/* Top Header */}
+      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0">
+              <div className="text-base font-bold text-white tracking-tight flex items-center gap-2 truncate">
+                <span>Prospecting & Leads</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono truncate">
+                  {currentProjectName}
+                </span>
               </div>
-            </div>
-
-            {/* Header Right Actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              {currentTab === 'leads' ? (
-                <>
-                  {/* View Switcher: Cards | List | Pipeline */}
-                  <div className="flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-xl text-xs">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
-                        viewMode === 'grid'
-                          ? 'bg-cyan-600 text-white font-semibold shadow'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="Card Grid View"
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5" />
-                      <span className="hidden md:inline">Cards</span>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
-                        viewMode === 'list'
-                          ? 'bg-cyan-600 text-white font-semibold shadow'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="Table List View"
-                    >
-                      <List className="w-3.5 h-3.5" />
-                      <span className="hidden md:inline">List</span>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('pipeline')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
-                        viewMode === 'pipeline'
-                          ? 'bg-cyan-600 text-white font-semibold shadow'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="Kanban Pipeline Board"
-                    >
-                      <Kanban className="w-3.5 h-3.5" />
-                      <span className="hidden md:inline">Pipeline</span>
-                    </button>
-                  </div>
-
-                  {/* Refresh */}
-                  <button
-                    onClick={fetchLeads}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition"
-                    title="Refresh Leads"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  </button>
-
-                  {/* Export */}
-                  <button
-                    onClick={() => setShowExport(true)}
-                    className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
-                    title="Export Leads"
-                  >
-                    <Download className="w-3.5 h-3.5 text-cyan-400" />
-                    <span className="hidden sm:inline">Export</span>
-                  </button>
-
-                  {/* Sync */}
-                  <button
-                    onClick={() => setShowSync(true)}
-                    className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-md transition"
-                    title="Push filtered leads to external webhook or CRM"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Sync</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setCurrentTab('leads')}
-                  className="flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>Back to Leads</span>
-                </button>
-              )}
+              <p className="text-[11px] text-slate-400 truncate hidden sm:block">
+                Real-time multi-source B2B scraping, scoring & outreach
+              </p>
             </div>
           </div>
-        </header>
 
-        {/* Main Content Area */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
-          {currentTab === 'settings' ? (
-            <SettingsView
-              currentUser={currentUser}
-              onUserUpdated={(u) => setCurrentUser(u)}
-            />
-          ) : (
-            <>
-              {/* Metric Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+          {/* Header Right Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* View Switcher: Cards | List | Pipeline */}
+            <div className="flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-xl text-xs">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                  viewMode === 'grid'
+                    ? 'bg-cyan-600 text-white font-semibold shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Card Grid View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Cards</span>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                  viewMode === 'list'
+                    ? 'bg-cyan-600 text-white font-semibold shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Table List View"
+              >
+                <List className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">List</span>
+              </button>
+              <button
+                onClick={() => setViewMode('pipeline')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                  viewMode === 'pipeline'
+                    ? 'bg-cyan-600 text-white font-semibold shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Kanban Pipeline Board"
+              >
+                <Kanban className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Pipeline</span>
+              </button>
+            </div>
+
+            {/* Refresh */}
+            <button
+              onClick={fetchLeads}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition"
+              title="Refresh Leads"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Export */}
+            <button
+              onClick={() => setShowExport(true)}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition"
+              title="Export Leads"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+
+            {/* Sync */}
+            <button
+              onClick={() => setShowSync(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-md transition"
+              title="Push filtered leads to external webhook or CRM"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sync</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
+        {/* Metric Badges */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
               <Zap className="w-5 h-5" />
@@ -525,8 +404,8 @@ export default function Dashboard() {
           loading={loading}
           projects={projects}
           activeProjectId={activeProjectId}
-          onSelectProject={setActiveProjectId}
-          onOpenProjectModal={() => setShowProjectModal(true)}
+          onSelectProject={handleSelectProject}
+          onOpenProjectModal={() => router.push('/projects')}
         />
 
         {/* Filter & Search Bar */}
@@ -661,12 +540,9 @@ export default function Dashboard() {
             onUpdateStage={handleUpdateStage}
           />
         )}
-      </>
-    )}
-  </main>
-</div>
+      </main>
 
-      {/* Modals */}
+      {/* Modals specifically for individual lead actions */}
       {selectedLead && (
         <LeadDetailModal
           lead={selectedLead}
@@ -691,36 +567,6 @@ export default function Dashboard() {
           onSuccess={fetchLeads}
         />
       )}
-
-      <ProjectManagerModal
-        isOpen={showProjectModal}
-        onClose={() => setShowProjectModal(false)}
-        projects={projects}
-        activeProjectId={activeProjectId}
-        onSelectProject={setActiveProjectId}
-        onRefreshProjects={fetchProjects}
-      />
-
-      <MailboxSettingsModal
-        isOpen={showMailboxModal}
-        onClose={() => setShowMailboxModal(false)}
-      />
-
-      <CampaignModal
-        isOpen={showCampaignModal}
-        onClose={() => setShowCampaignModal(false)}
-        projects={projects}
-        activeProjectId={activeProjectId}
-        onOpenMailboxModal={() => {
-          setShowCampaignModal(false);
-          setShowMailboxModal(true);
-        }}
-      />
-
-      <SystemSmtpModal
-        isOpen={showSystemSmtpModal}
-        onClose={() => setShowSystemSmtpModal(false)}
-      />
-    </div>
+    </DashboardLayout>
   );
 }

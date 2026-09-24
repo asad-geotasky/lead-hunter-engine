@@ -1,21 +1,43 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import DashboardLayout from '@/components/DashboardLayout';
+import SettingsView from '@/components/SettingsView';
 
 export default function SettingsPage() {
-  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+  } | null>(null);
+
+  const fetchSession = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated) {
+          setCurrentUser(data.user);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch user in settings page:', e);
+    }
+  };
 
   useEffect(() => {
-    router.replace('/?tab=settings');
-  }, [router]);
+    fetchSession();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
-      <div className="text-center space-y-2">
-        <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-sm">Loading Settings...</p>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <SettingsView
+          currentUser={currentUser}
+          onUserUpdated={(u) => setCurrentUser(u)}
+        />
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
