@@ -240,27 +240,38 @@ export async function pushToPlunk(
       continue;
     }
 
+    // Strict string sanitization: Plunk enforces that every metadata key in data
+    // can ONLY be a string or array of strings (no raw numbers, booleans, or nulls)
+    const rawData: Record<string, unknown> = {
+      companyName: lead.businessName || '',
+      businessName: lead.businessName || '',
+      firstName: record.first_name || '',
+      lastName: record.last_name || '',
+      ownerName: lead.ownerDiscovery?.ownerName || '',
+      phone: lead.phone || '',
+      city: lead.city || '',
+      category: lead.category || '',
+      website: lead.website || '',
+      opportunityScore: String(lead.opportunityScore ?? 0),
+      lineType: String(lead.phoneIntelligence?.lineType || 'UNKNOWN'),
+      websitePreviewUrl: record.website_preview_url || '',
+      coldEmailSubject: record.cold_email_subject || '',
+      coldEmailBody: record.cold_email_body || '',
+      source: 'LeadHunter Engine',
+    };
+
+    const sanitizedData: Record<string, string> = {};
+    for (const [key, val] of Object.entries(rawData)) {
+      if (val !== undefined && val !== null) {
+        sanitizedData[key] = String(val);
+      }
+    }
+
     const payload = {
       email,
       subscribed: true,
       event: (eventName && eventName.trim()) ? eventName.trim() : 'lead_discovered',
-      data: {
-        companyName: lead.businessName,
-        businessName: lead.businessName,
-        firstName: record.first_name,
-        lastName: record.last_name,
-        ownerName: lead.ownerDiscovery?.ownerName || '',
-        phone: lead.phone || '',
-        city: lead.city,
-        category: lead.category,
-        website: lead.website || '',
-        opportunityScore: lead.opportunityScore,
-        lineType: lead.phoneIntelligence?.lineType || 'UNKNOWN',
-        websitePreviewUrl: record.website_preview_url,
-        coldEmailSubject: record.cold_email_subject,
-        coldEmailBody: record.cold_email_body,
-        source: 'LeadHunter Engine',
-      },
+      data: sanitizedData,
     };
 
     try {
@@ -277,7 +288,14 @@ export async function pushToPlunk(
         syncedCount++;
       } else {
         const text = await res.text();
-        errors.push(`${lead.businessName} (${email}): ${res.status} ${text}`);
+        let parsedMessage = text;
+        try {
+          const jsonErr = JSON.parse(text);
+          if (jsonErr.message) parsedMessage = jsonErr.message;
+        } catch {
+          // keep text
+        }
+        errors.push(`${lead.businessName} (${email}): ${res.status} ${parsedMessage}`);
       }
     } catch (err: any) {
       errors.push(`${lead.businessName}: ${err?.message || 'Network error'}`);
