@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllLeads, updateLead } from '@/lib/storage';
-import { pushToInstantly, pushToSmartlead, pushToWebhook } from '@/lib/outreach/integrations';
+import { pushToInstantly, pushToSmartlead, pushToWebhook, pushToPlunk } from '@/lib/outreach/integrations';
 import { Lead } from '@/types/lead';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { platform, apiKey, campaignId, webhookUrl, leadIds } = body;
+    const { platform, apiKey, campaignId, webhookUrl, plunkUrl, plunkEvent, leadIds } = body;
 
     if (!platform) {
       return NextResponse.json({ error: 'Platform is required' }, { status: 400 });
@@ -32,6 +32,14 @@ export async function POST(req: NextRequest) {
       result = await pushToSmartlead(targetLeads, apiKey, campaignId, hostOrigin);
     } else if (platform === 'webhook') {
       result = await pushToWebhook(targetLeads, webhookUrl, hostOrigin);
+    } else if (platform === 'plunk') {
+      result = await pushToPlunk(
+        targetLeads,
+        apiKey,
+        plunkUrl || 'https://smtp.geotasky.com',
+        plunkEvent || 'lead_discovered',
+        hostOrigin
+      );
     } else {
       return NextResponse.json({ error: 'Unsupported platform' }, { status: 400 });
     }

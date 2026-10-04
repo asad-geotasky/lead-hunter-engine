@@ -55,6 +55,8 @@ export default function SettingsView({ currentUser, onUserUpdated }: SettingsVie
   const [apifyKey, setApifyKey] = useState('');
   const [outscraperKey, setOutscraperKey] = useState('');
   const [googleKey, setGoogleKey] = useState('');
+  const [plunkKey, setPlunkKey] = useState('');
+  const [plunkUrl, setPlunkUrl] = useState('https://smtp.geotasky.com');
   const [keysSavedMsg, setKeysSavedMsg] = useState(false);
 
   useEffect(() => {
@@ -91,6 +93,8 @@ export default function SettingsView({ currentUser, onUserUpdated }: SettingsVie
       setApifyKey(localStorage.getItem('lead_hunter_key_apify') || localStorage.getItem('leadhunter_apify_key') || '');
       setOutscraperKey(localStorage.getItem('lead_hunter_key_outscraper') || localStorage.getItem('leadhunter_outscraper_key') || '');
       setGoogleKey(localStorage.getItem('lead_hunter_key_google') || localStorage.getItem('leadhunter_google_key') || '');
+      setPlunkKey(localStorage.getItem('leadhunter_plunk_key') || '');
+      setPlunkUrl(localStorage.getItem('leadhunter_plunk_url') || 'https://smtp.geotasky.com');
     }
   }, []);
 
@@ -234,6 +238,8 @@ export default function SettingsView({ currentUser, onUserUpdated }: SettingsVie
       localStorage.setItem('leadhunter_apify_key', apifyKey.trim());
       localStorage.setItem('leadhunter_outscraper_key', outscraperKey.trim());
       localStorage.setItem('leadhunter_google_key', googleKey.trim());
+      localStorage.setItem('leadhunter_plunk_key', plunkKey.trim());
+      localStorage.setItem('leadhunter_plunk_url', plunkUrl.trim());
       setKeysSavedMsg(true);
       setTimeout(() => setKeysSavedMsg(false), 3000);
     }
@@ -691,6 +697,44 @@ export default function SettingsView({ currentUser, onUserUpdated }: SettingsVie
                   onChange={(e) => setGoogleKey(e.target.value)}
                   className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
                 />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 space-y-4">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Plunk Outreach Integration (Custom Domain)</h3>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 mb-1 block">Plunk Host / Base URL</label>
+                <div className="relative">
+                  <Server className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="url"
+                    placeholder="https://smtp.geotasky.com"
+                    value={plunkUrl}
+                    onChange={(e) => setPlunkUrl(e.target.value)}
+                    className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                  />
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Default: <code>https://smtp.geotasky.com</code> (Automatically calls <code>/api/v1/track</code>)
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 mb-1 block">Plunk Secret API Key (<code>sk_...</code>)</label>
+                <div className="relative">
+                  <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="password"
+                    placeholder="sk_live_..."
+                    value={plunkKey}
+                    onChange={(e) => setPlunkKey(e.target.value)}
+                    className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                  />
+                </div>
               </div>
             </div>
 
