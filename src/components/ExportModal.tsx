@@ -17,6 +17,7 @@ export default function ExportModal({ leads, onClose }: ExportModalProps) {
       'City',
       'Address',
       'Phone',
+      'Email',
       'Line Type',
       'Carrier',
       'Owner Name',
@@ -24,6 +25,7 @@ export default function ExportModal({ leads, onClose }: ExportModalProps) {
       'Reviews Count',
       'Has Website',
       'Website',
+      'Google Maps URL',
       'Opportunity Score',
       'Pipeline Stage',
       'Mockup URL',
@@ -37,6 +39,7 @@ export default function ExportModal({ leads, onClose }: ExportModalProps) {
       `"${(l.city || '').replace(/"/g, '""')}"`,
       `"${(l.address || '').replace(/"/g, '""')}"`,
       `"${(l.phone || '').replace(/"/g, '""')}"`,
+      `"${(l.email || '').replace(/"/g, '""')}"`,
       `"${l.phoneIntelligence?.lineType || ''}"`,
       `"${(l.phoneIntelligence?.carrier || '').replace(/"/g, '""')}"`,
       `"${(l.ownerDiscovery?.ownerName || '').replace(/"/g, '""')}"`,
@@ -44,6 +47,7 @@ export default function ExportModal({ leads, onClose }: ExportModalProps) {
       l.reviewCount || 0,
       l.website ? 'YES' : 'NO',
       `"${(l.website || '').replace(/"/g, '""')}"`,
+      `"${(l.googleMapsUrl || '').replace(/"/g, '""')}"`,
       l.opportunityScore || 0,
       l.pipeline.stage,
       `"${(l.outreach?.mockupUrl || '').replace(/"/g, '""')}"`,
@@ -51,25 +55,29 @@ export default function ExportModal({ leads, onClose }: ExportModalProps) {
       `"${(l.outreach?.smsPitch || '').replace(/"/g, '""')}"`,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.href = url;
     link.setAttribute('download', `leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     onClose();
   };
 
   const exportJson = () => {
-    const jsonStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(leads, null, 2));
+    const blob = new Blob([JSON.stringify(leads, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', jsonStr);
+    link.href = url;
     link.setAttribute('download', `leads_export_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     onClose();
   };
 

@@ -21,7 +21,7 @@ export interface PhoneIntelligence {
   lineType: LineType;
   carrier?: string;
   isCallableMobile: boolean;
-  confidence: 'HIGH' | 'MEDIUM' | 'ESTIMATED';
+  confidence: 'HIGH' | 'MEDIUM' | 'ESTIMATED' | 'UNVERIFIED';
   notes?: string;
 }
 
@@ -46,6 +46,7 @@ export interface WebsiteAudit {
   pageSpeedScore?: number;
   staleCopyrightYear?: number;
   issuesDetected?: string[];
+  scrapedEmail?: string;
 }
 
 export interface OutreachKit {

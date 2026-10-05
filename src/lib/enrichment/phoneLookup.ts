@@ -72,18 +72,11 @@ export async function analyzePhoneNumber(
     };
   }
 
-  // For small business owners without websites, ~40-60% use a cell phone directly as their GMB phone
-  // Deterministic hash based on digits for simulation consistency
-  const hash = cleaned.split('').reduce((acc, char) => acc + parseInt(char, 10) || 0, 0);
-  const isLikelyMobile = hash % 2 === 0;
-
   return {
-    lineType: isLikelyMobile ? 'MOBILE' : 'LANDLINE',
-    carrier: isLikelyMobile ? 'Verizon Wireless / T-Mobile' : 'Regional Local Telecom',
-    isCallableMobile: isLikelyMobile,
-    confidence: 'MEDIUM',
-    notes: isLikelyMobile
-      ? 'Estimated wireless line (Recommended for SMS / direct owner call)'
-      : 'Estimated fixed wireline (Likely front desk or main office)',
+    lineType: 'UNKNOWN',
+    carrier: undefined,
+    isCallableMobile: false,
+    confidence: 'UNVERIFIED',
+    notes: 'Unverified line (connect Twilio Lookup API for real carrier verification)',
   };
 }

@@ -63,6 +63,20 @@ export async function auditWebsite(websiteUrl: string | null): Promise<WebsiteAu
       issuesDetected.push(`Built on restrictive platform: ${cmsDetected}`);
     }
 
+    // Real email discovery from website HTML
+    const mailtoMatch = html.match(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+    let scrapedEmail: string | undefined = mailtoMatch ? mailtoMatch[1].trim() : undefined;
+    if (!scrapedEmail) {
+      const emailRegex = /\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g;
+      const matches = html.match(emailRegex) || [];
+      const valid = matches.filter(
+        (e) => !e.endsWith('.png') && !e.endsWith('.jpg') && !e.endsWith('.webp') && !e.includes('sentry') && !e.includes('wixpress') && !e.includes('schema.org')
+      );
+      if (valid.length > 0) {
+        scrapedEmail = valid[0];
+      }
+    }
+
     return {
       hasWebsite: true,
       hasSsl,
@@ -70,6 +84,7 @@ export async function auditWebsite(websiteUrl: string | null): Promise<WebsiteAu
       cmsDetected,
       staleCopyrightYear,
       issuesDetected,
+      scrapedEmail,
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';

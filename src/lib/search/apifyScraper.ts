@@ -86,7 +86,14 @@ export async function searchApify(
     const placeId = item.placeId || item.cid || `apify_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const extractedEmail = item.email || (item.emails && item.emails[0]) || item.contactEmail || null;
     const phone = item.phone || item.phoneUnformatted || '';
-    const website = item.website || item.url || null;
+    
+    // In Apify Compass crawler, item.website is the company domain. item.url is the Google Maps URL.
+    const website = (item.website && item.website.trim() !== '' && !item.website.includes('google.com/maps')) 
+      ? item.website.trim() 
+      : null;
+    const googleMapsUrl = (item.url && item.url.includes('google.com/maps'))
+      ? item.url
+      : `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + (item.address || city))}`;
 
     const reviews = (item.reviews || []).slice(0, 3).map((r) => ({
       author: r.name || 'Verified Customer',
@@ -108,13 +115,13 @@ export async function searchApify(
       reviewCount: item.reviewsCount || 0,
       reviews,
       website,
-      googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + (item.address || city))}`,
+      googleMapsUrl,
       projectId: projectId || null,
       phoneIntelligence: {
-        lineType: phone.startsWith('+1800') ? 'TOLL_FREE' : 'MOBILE',
-        isCallableMobile: true,
+        lineType: phone.startsWith('+1800') || phone.startsWith('800') ? 'TOLL_FREE' : 'UNKNOWN',
+        isCallableMobile: false,
         confidence: 'ESTIMATED',
-        notes: 'Apify web verified',
+        notes: 'Apify web scrape result',
       },
       ownerDiscovery: {
         confidence: extractedEmail ? 'PROBABLE' : 'UNVERIFIED',

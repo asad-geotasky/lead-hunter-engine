@@ -107,17 +107,12 @@ export async function executeUnifiedSearch(params: UnifiedSearchParams): Promise
       break;
   }
 
-  // Assign generated email to mock leads if missing for test campaigns
-  leads = leads.map((l) => {
-    if (!l.email) {
-      const cleanName = l.businessName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      l.email = `contact@${cleanName || 'localbiz'}.com`;
-    }
-    if (projectId && !l.projectId) {
-      l.projectId = projectId;
-    }
-    return l;
-  });
+  if (projectId) {
+    leads = leads.map((l) => ({
+      ...l,
+      projectId: l.projectId || projectId,
+    }));
+  }
 
   // Cross-provider post-filters
   if (websiteFilter === 'no-website') {

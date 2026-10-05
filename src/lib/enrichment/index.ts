@@ -29,8 +29,12 @@ export async function enrichLead(
   // 3. Technical Website Audit (if website exists)
   const websiteAudit = await auditWebsite(lead.website);
 
+  // Populate verified email if discovered from real company website
+  const verifiedEmail = lead.email || websiteAudit.scrapedEmail || null;
+
   const updatedLead: Lead = {
     ...lead,
+    email: verifiedEmail,
     phoneIntelligence,
     ownerDiscovery,
     websiteAudit,

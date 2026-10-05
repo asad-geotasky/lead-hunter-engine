@@ -40,6 +40,7 @@ export async function searchGooglePlaces(
     'places.rating',
     'places.userRatingCount',
     'places.nationalPhoneNumber',
+    'places.internationalPhoneNumber',
     'places.googleMapsUri',
     'places.primaryTypeDisplayName',
     'places.reviews',
@@ -96,7 +97,8 @@ export async function searchGooglePlaces(
       category: place.primaryTypeDisplayName?.text || niche,
       address: place.formattedAddress || `${city}`,
       city,
-      phone: place.nationalPhoneNumber || '',
+      phone: place.internationalPhoneNumber || place.nationalPhoneNumber || '',
+      email: null, // Google Places API does not provide emails. Never fabricated.
       rating: place.rating || 0,
       reviewCount: place.userRatingCount || 0,
       reviews,

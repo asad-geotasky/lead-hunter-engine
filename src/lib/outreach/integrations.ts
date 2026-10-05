@@ -41,11 +41,8 @@ export function formatLeadForOutreach(lead: Lead, hostOrigin: string = 'http://l
 
   const bestReview = lead.reviews && lead.reviews.length > 0 ? lead.reviews[0].text : '';
 
-  // Extract or simulate business email
-  const slug = lead.businessName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const email = lead.website
-    ? `contact@${lead.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}`
-    : `info@${slug}.com`;
+  // Use real scraped email only. Never fabricate synthetic emails.
+  const email = (lead.email && lead.email.trim() !== '') ? lead.email.trim() : '';
 
   return {
     email,
@@ -302,8 +299,14 @@ export async function pushToPlunk(
     }
   }
 
-  if (syncedCount === 0 && errors.length > 0) {
-    throw new Error(`Failed to sync to Plunk: ${errors[0]}`);
+  if (syncedCount === 0) {
+    if (errors.length > 0) {
+      throw new Error(`Failed to sync to Plunk: ${errors[0]}`);
+    }
+    const withEmail = leads.filter((l) => !!l.email && l.email.includes('@'));
+    if (withEmail.length === 0) {
+      throw new Error('None of the selected leads contain an email address. Plunk requires a valid email address to create or track contacts.');
+    }
   }
 
   return { success: true, synced: syncedCount };

@@ -38,29 +38,12 @@ export async function discoverOwnerDetails(
     }
   }
 
-  // 2. Intelligent Discovery using Local Registry & Public Social Signals
-  const COMMON_OWNERS = [
-    { name: 'Robert Miller', title: 'Owner & Operator' },
-    { name: 'David Henderson', title: 'Principal Founder' },
-    { name: 'Michael Sanchez', title: 'Managing Member' },
-    { name: 'James Carter', title: 'Owner' },
-    { name: 'Sarah Jenkins', title: 'President / Co-Owner' },
-    { name: 'Thomas Bradley', title: 'General Manager' },
-  ];
-
-  const seed = (businessName + city).length;
-  const match = COMMON_OWNERS[seed % COMMON_OWNERS.length];
-
-  const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const citySlug = city.toLowerCase().replace(/[^a-z0-9]/g, '');
-
+  // 2. If no corporate registration found, do NOT fabricate fake names
   return {
-    ownerName: match.name,
-    title: match.title,
-    confidence: 'PROBABLE',
-    source: 'State Corporate Filing / Secretary of State',
+    ownerName: undefined,
+    title: undefined,
+    confidence: 'UNVERIFIED',
     socialProfiles: {
-      facebook: `https://facebook.com/${slug}.${citySlug}`,
       yelp: `https://yelp.com/search?find_desc=${encodeURIComponent(businessName)}&find_loc=${encodeURIComponent(city)}`,
       linkedin: `https://linkedin.com/search/results/all/?keywords=${encodeURIComponent(businessName + ' ' + city)}`,
     },

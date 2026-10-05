@@ -10,6 +10,7 @@ interface OutscraperPlaceItem {
   city?: string;
   phone?: string;
   site?: string;
+  location_link?: string;
   rating?: number;
   reviews?: number;
   email_1?: string;
@@ -103,14 +104,14 @@ export async function searchOutscraper(
       rating: item.rating || 0,
       reviewCount: item.reviews || 0,
       reviews,
-      website: item.site || null,
-      googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + (item.full_address || city))}`,
+      website: (item.site && item.site.trim() !== '') ? item.site.trim() : null,
+      googleMapsUrl: item.location_link || `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + (item.full_address || city))}`,
       projectId: projectId || null,
       phoneIntelligence: {
-        lineType: item.phone?.startsWith('+1800') ? 'TOLL_FREE' : 'MOBILE',
-        isCallableMobile: true,
-        confidence: 'HIGH',
-        notes: 'Outscraper contact verified',
+        lineType: item.phone?.startsWith('+1800') ? 'TOLL_FREE' : 'UNKNOWN',
+        isCallableMobile: false,
+        confidence: 'ESTIMATED',
+        notes: 'Outscraper contact record',
       },
       ownerDiscovery: {
         confidence: extractedEmail ? 'PROBABLE' : 'UNVERIFIED',
